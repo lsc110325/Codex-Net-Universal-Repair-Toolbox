@@ -26,3 +26,9 @@ startup.log
 # Windows
 Thumbs.db
 Desktop.ini
+# 误入的第三方临时文件（百度网盘图片查看器等）
+%USERPROFILE%
+**/%USERPROFILE%/**
+**/Baidu*/**
+**/BaiduYunGuanjia/**
+*.jpg-lx2
