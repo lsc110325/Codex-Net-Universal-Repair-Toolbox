@@ -8,7 +8,7 @@
 
 | 类型 | 建议 |
 |---|---|
-| 首选 | `codex-network-repair-tool` |
+| 首选 | `Codex-Net-Universal-Repair-Toolbox` |
 | 备选 | `CodexNetworkFixTool` / `codex-net-fix` / `codex-windows-network-fix` |
 
 ## 2. About（一句话简介，256 字符内）
@@ -49,7 +49,7 @@ git init
 git add .
 git commit -m "feat: initial public release v1.0.100"
 git branch -M main
-git remote add origin https://github.com/<你的用户名>/codex-network-repair-tool.git
+git remote add origin https://github.com/<你的用户名>/Codex-Net-Universal-Repair-Toolbox.git
 git push -u origin main
 ```
 

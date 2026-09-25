@@ -1,4 +1,4 @@
-﻿# Codex 网络修复工具 (Codex Network Repair Tool)
+﻿# Codex 网络修复工具 (Codex Net Universal Repair Toolbox)
 
 > 一键修复 **Codex / ChatGPT 桌面版 / Codex CLI / IDE 插件** 在本机无法联网的问题。
 > 自动探测本机代理、注入代理环境变量、修复配置、修复 git，并提供全面自检与一键回滚。
