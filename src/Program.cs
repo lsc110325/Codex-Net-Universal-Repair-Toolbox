@@ -822,7 +822,7 @@ namespace CodexNetFix
                         rb.Ghost = true; rb.CustomFill = Color.Empty; rb.TextOverride = Color.White;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
-                        else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24;   // ≈9% 白，非常柔和 }
+                        else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }
                     }
                     else rb.TextOverride = Color.Empty;
                 }
