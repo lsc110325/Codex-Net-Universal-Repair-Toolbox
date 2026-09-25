@@ -248,7 +248,7 @@ namespace CodexNetFix
             int pw = pillW <= 0f ? navRepair.Box.Width : (int)Math.Round(pillW);
             Rectangle pr = new Rectangle(px, navRepair.Box.Top, Math.Max(8, pw - 1), navRepair.Box.Height - 1);
             using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(pr, 8))
-            using (SolidBrush sb = new SolidBrush(pal.AccentDark))
+            using (SolidBrush sb = new SolidBrush(Color.White))
                 g.FillPath(sb, gp);
 
             // 文字：按滑块覆盖该导航项的比例，从白色渐变到强调色（避免“露馅”）
@@ -257,7 +257,7 @@ namespace CodexNetFix
                 Rectangle tr = new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width, n.Box.Height);
                 int x1 = Math.Max(tr.Left, pr.Left), x2 = Math.Min(tr.Right, pr.Right);
                 float cov = x2 > x1 ? (float)(x2 - x1) / tr.Width : 0f;
-                Color col = Color.White;   // 选中态由深色块体现，文字保持白色
+                Color col = ColorUtil.Blend(Color.White, pal.Accent, cov);   // 白底选中块上用强调色文字
                 Font f = n.Box.CaptionFont != null ? n.Box.CaptionFont : Draw.Ui(9.5f, FontStyle.Regular);
                 TextRenderer.DrawText(g, n.Caption, f, tr, col,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
@@ -277,7 +277,7 @@ namespace CodexNetFix
             b.HoverFillColor = Color.White;
             b.HoverAlpha = 24;   // ≈9% 白，非常柔和
             b.NoPaint = true;           // 背景完全交给顶栏绘制
-            b.Ghost = false; b.NoPaint = false; b.CustomFill = pal.AccentDark; b.TextOverride = Color.White; b.HoverFillColor = Color.Empty;   // 分层深色块
+            b.Ghost = false; b.NoPaint = false; b.CustomFill = Color.White; b.TextOverride = pal.Accent; b.HoverFillColor = Color.Empty;   // 白色圆角矩形 + 强调色图标
             b.Click += h;
             return b;
         }
@@ -820,7 +820,7 @@ namespace CodexNetFix
                     }
                     else if (tag == "winbtn" || tag == "winclose")
                     {
-                        rb.Ghost = false; rb.CustomFill = pal.AccentDark; rb.TextOverride = Color.White;
+                        rb.Ghost = false; rb.CustomFill = Color.White; rb.TextOverride = pal.Accent;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
                         else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }
