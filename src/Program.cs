@@ -22,13 +22,14 @@ namespace CodexNetFix
         Panel content;
         NavItem navRepair, navCheck, navAbout, navSettings;
         string currentPage = "repair";
+        float pillX = -1f, pillW = 0f;   // 导航胶囊滑动
         Panel pageRepair, pageCheck, pageAbout, pageSettings;
         RoundPanel cardPort, cardOptions, cardActions, cardLog, cardCheckList, cardLook, cardBehave, cardStore, cardLogNow, cardLogPrev, cardHistory;
         TextBox txtPort, logBox;
         Label lblPortHint, lblCheckSum, lblStorePath, lblVersion, lblIntervalValue, lblAccentName;
         RoundButton btnDetect, btnFix, btnRestart, btnRollback, btnClearEnv, btnCheck, btnExport, btnCopy, btnDoc, btnSave, btnOpenDir, btnIntervalMinus, btnIntervalPlus, btnCleanup;
         RoundButton[] swatches;
-        SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec;
+        SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec, swAnim;
         FlowLayoutPanel checkList;
         Label titleLabel, subLabel;
         Label lblSideStatus, lblSideSub, lblSideHome;
@@ -141,22 +142,39 @@ namespace CodexNetFix
             public bool Hover = false;
         }
 
+        void AnimatePill()
+        {
+            NavItem target = null;
+            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings })
+                if (n.Key == currentPage) target = n;
+            if (target == null || topBar == null) return;
+            float toX = target.Box.Left, toW = target.Box.Width;
+            if (pillX < 0f) { pillX = toX; pillW = toW; return; }
+            float fromX = pillX, fromW = pillW;
+            Anim.Start(topBar, 200, delegate(float e) { pillX = fromX + (toX - fromX) * e; pillW = fromW + (toW - fromW) * e; });
+        }
+
         void DrawNavPills(Graphics g)
         {
             if (navRepair == null) return;
             Draw.Smooth(g);
+            // 激活项的白色胶囊（带滑动动画）
+            int px = pillX < 0f ? navRepair.Box.Left : (int)Math.Round(pillX);
+            int pw = pillW <= 0f ? navRepair.Box.Width : (int)Math.Round(pillW);
+            Rectangle pr = new Rectangle(px, navRepair.Box.Top, Math.Max(8, pw - 1), navRepair.Box.Height - 1);
+            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(pr, navRepair.Box.Height / 2))
+            using (SolidBrush sb = new SolidBrush(Color.White))
+                g.FillPath(sb, gp);
+            // 悬停项浅色胶囊
             foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings })
             {
-                bool active = n.Key == currentPage;
-                Color fill = active ? Color.White : (n.Hover ? Mix(pal.Accent, Color.White, 0.20) : Color.Empty);
-                if (fill == Color.Empty) continue;
+                if (n.Key == currentPage || !n.Hover) continue;
                 Rectangle rr = new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width - 1, n.Box.Height - 1);
                 using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(rr, n.Box.Height / 2))
-                using (SolidBrush sb = new SolidBrush(fill))
+                using (SolidBrush sb = new SolidBrush(Mix(pal.Accent, Color.White, 0.20)))
                     g.FillPath(sb, gp);
             }
-        }
-        NavItem MakeNav(string text, int left, string key)
+        }        NavItem MakeNav(string text, int left, string key)
         {
             NavItem n = new NavItem();
             n.Key = key;
@@ -472,13 +490,14 @@ namespace CodexNetFix
             swStartCheck = MkSwitch("启动时自动自检", 18, 56, cardBehave, 250);
             swMonitor = MkSwitch("后台监控代理健康", 18, 92, cardBehave, 250);
             swTray = MkSwitch("关闭窗口时最小化到托盘", 18, 128, cardBehave, 250);
-            cardBehave.Controls.Add(MkLabel("监控间隔", 9.5f, FontStyle.Regular, 18, 178, "opt"));
+            swAnim = MkSwitch("界面动画（滑块 / 胶囊滑动）", 18, 164, cardBehave, 250);
+            cardBehave.Controls.Add(MkLabel("监控间隔", 9.5f, FontStyle.Regular, 18, 214, "opt"));
             btnIntervalMinus = new RoundButton();
-            btnIntervalMinus.Text = "-"; btnIntervalMinus.Left = 120; btnIntervalMinus.Top = 172; btnIntervalMinus.Width = 34; btnIntervalMinus.Height = 30;
+            btnIntervalMinus.Text = "-"; btnIntervalMinus.Left = 120; btnIntervalMinus.Top = 208; btnIntervalMinus.Width = 34; btnIntervalMinus.Height = 30;
             btnIntervalMinus.Click += delegate { cfg.MonitorInterval = Math.Max(15, cfg.MonitorInterval - 15); RefreshInterval(); };
-            lblIntervalValue = MkLabel(cfg.MonitorInterval + " 秒", 9.5f, FontStyle.Regular, 164, 178, "opt");
+            lblIntervalValue = MkLabel(cfg.MonitorInterval + " 秒", 9.5f, FontStyle.Regular, 164, 214, "opt");
             btnIntervalPlus = new RoundButton();
-            btnIntervalPlus.Text = "+"; btnIntervalPlus.Left = 228; btnIntervalPlus.Top = 172; btnIntervalPlus.Width = 34; btnIntervalPlus.Height = 30;
+            btnIntervalPlus.Text = "+"; btnIntervalPlus.Left = 228; btnIntervalPlus.Top = 208; btnIntervalPlus.Width = 34; btnIntervalPlus.Height = 30;
             btnIntervalPlus.Click += delegate { cfg.MonitorInterval = Math.Min(1800, cfg.MonitorInterval + 15); RefreshInterval(); };
             cardBehave.Controls.Add(btnIntervalMinus); cardBehave.Controls.Add(lblIntervalValue); cardBehave.Controls.Add(btnIntervalPlus);
 
@@ -592,6 +611,8 @@ namespace CodexNetFix
             swCodex.Checked = cfg.OptCodex; swUserEnv.Checked = cfg.OptUserEnv;
             swGit.Checked = cfg.OptGit; swGitExec.Checked = cfg.OptGitExec;
             swStartCheck.Checked = cfg.CheckOnStart; swMonitor.Checked = cfg.Monitor; swTray.Checked = cfg.TrayResident;
+            if (swAnim != null) swAnim.Checked = cfg.EnableAnim;
+            Anim.Enabled = cfg.EnableAnim;
             if (txtPort != null && cfg.LastPort > 0) txtPort.Text = cfg.LastPort.ToString();
             RefreshInterval();
         }
@@ -670,6 +691,7 @@ namespace CodexNetFix
             cfg.OptCodex = swCodex.Checked; cfg.OptUserEnv = swUserEnv.Checked;
             cfg.OptGit = swGit.Checked; cfg.OptGitExec = swGitExec.Checked;
             cfg.CheckOnStart = swStartCheck.Checked; cfg.Monitor = swMonitor.Checked; cfg.TrayResident = swTray.Checked;
+            if (swAnim != null) { cfg.EnableAnim = swAnim.Checked; Anim.Enabled = cfg.EnableAnim; }
             int p; if (int.TryParse(txtPort.Text.Trim(), out p)) cfg.LastPort = p;
             cfg.ThemeMode = "light";
             cfg.AccentKey = accent.Key;
@@ -780,15 +802,18 @@ namespace CodexNetFix
         }
         void ShowPage(string key)
         {
+            currentPage = key;
             pageRepair.Visible = key == "repair";
             pageCheck.Visible = key == "check";
             pageAbout.Visible = key == "about";
             pageSettings.Visible = key == "settings";
             if (key == "about") RefreshHistory();
             StyleTree(content);
+            if (topBar != null) StyleTree(topBar);
+            StyleNav();
+            AnimatePill();
             Invalidate(true);
         }
-
         void AdjustPageTop(int offset)
         {
             foreach (Panel pg in new Panel[] { pageRepair, pageCheck, pageAbout, pageSettings })

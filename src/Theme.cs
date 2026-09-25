@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
@@ -126,6 +127,54 @@ namespace CodexNetFix
         }
     }
 
+    public static class ColorUtil
+    {
+        public static Color Blend(Color a, Color b, float t)
+        {
+            if (t < 0f) t = 0f; if (t > 1f) t = 1f;
+            return Color.FromArgb((int)(a.R + (b.R - a.R) * t), (int)(a.G + (b.G - a.G) * t), (int)(a.B + (b.B - a.B) * t));
+        }
+    }
+
+    // ---------- 轻量动画驱动（60fps，仅在动画进行时运行） ----------
+    public static class Anim
+    {
+        public static bool Enabled = true;
+        class Job { public Control Target; public long Start; public int Duration; public Action<float> Apply; public Action Done; }
+        static readonly List<Job> jobs = new List<Job>();
+        static System.Windows.Forms.Timer timer;
+
+        public static void Start(Control target, int durationMs, Action<float> apply) { Start(target, durationMs, apply, null); }
+
+        public static void Start(Control target, int durationMs, Action<float> apply, Action done)
+        {
+            if (!Enabled) { try { apply(1f); } catch { } if (done != null) { try { done(); } catch { } } return; }
+            Job j = new Job();
+            j.Target = target; j.Start = Environment.TickCount; j.Duration = Math.Max(16, durationMs); j.Apply = apply; j.Done = done;
+            jobs.Add(j);
+            if (timer == null) { timer = new System.Windows.Forms.Timer(); timer.Interval = 16; timer.Tick += delegate(object s, EventArgs e) { Tick(); }; }
+            if (!timer.Enabled) timer.Start();
+        }
+
+        static void Tick()
+        {
+            long now = Environment.TickCount;
+            for (int i = jobs.Count - 1; i >= 0; i--)
+            {
+                Job j = jobs[i];
+                float t = (float)(now - j.Start) / j.Duration;
+                if (t > 1f) t = 1f;
+                float e = 1f - (float)Math.Pow(1f - t, 3);   // ease-out cubic
+                try { j.Apply(e); j.Target.Invalidate(); } catch { }
+                if (t >= 1f)
+                {
+                    jobs.RemoveAt(i);
+                    if (j.Done != null) { try { j.Done(); } catch { } }
+                }
+            }
+            if (jobs.Count == 0 && timer != null) timer.Stop();
+        }
+    }
     // 圆角卡片
     public class RoundPanel : Panel
     {
@@ -177,6 +226,8 @@ namespace CodexNetFix
         public Palette Theme;
         bool hover = false;
         bool down = false;
+        float hoverT = 0f;
+        float pressT = 0f;
 
         public RoundButton()
         {
@@ -188,10 +239,10 @@ namespace CodexNetFix
             Cursor = Cursors.Hand;
         }
 
-        protected override void OnMouseEnter(EventArgs e) { hover = true; Invalidate(); base.OnMouseEnter(e); }
-        protected override void OnMouseLeave(EventArgs e) { hover = false; down = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnMouseDown(MouseEventArgs e) { down = true; Invalidate(); base.OnMouseDown(e); }
-        protected override void OnMouseUp(MouseEventArgs e) { down = false; Invalidate(); base.OnMouseUp(e); }
+        protected override void OnMouseEnter(EventArgs e) { hover = true; float f = hoverT; Anim.Start(this, 120, delegate(float p) { hoverT = f + (1f - f) * p; }); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { hover = false; float f = hoverT; Anim.Start(this, 120, delegate(float p) { hoverT = f * (1f - p); }); base.OnMouseLeave(e); }
+        protected override void OnMouseDown(MouseEventArgs e) { down = true; Anim.Start(this, 80, delegate(float p) { pressT = p; }); base.OnMouseDown(e); }
+        protected override void OnMouseUp(MouseEventArgs e) { down = false; float f = pressT; Anim.Start(this, 110, delegate(float p) { pressT = f * (1f - p); }); base.OnMouseUp(e); }
 
         static Color Blend(Color a, Color b, double t)
         {
@@ -267,6 +318,7 @@ namespace CodexNetFix
         public Palette Theme;
         public bool TransparentPaint = false;
         public event EventHandler CheckedChanged;
+        float pos = -1f;   // 0=关 1=开（用于滑行动画）
 
         public SwitchBox()
         {
@@ -278,7 +330,10 @@ namespace CodexNetFix
 
         protected override void OnMouseClick(MouseEventArgs e)
         {
+            float from = pos < 0f ? (Checked ? 1f : 0f) : pos;
             Checked = !Checked;
+            float to = Checked ? 1f : 0f;
+            Anim.Start(this, 150, delegate(float p) { pos = from + (to - from) * p; });
             Invalidate();
             if (CheckedChanged != null) CheckedChanged(this, EventArgs.Empty);
             base.OnMouseClick(e);
@@ -292,10 +347,11 @@ namespace CodexNetFix
             Palette t = Theme != null ? Theme : Palette.Create(false, AccentPreset.All()[0]);
             Rectangle track = new Rectangle(0, (Height - 22) / 2, Math.Min(Width - 1, 42), 22);
             using (GraphicsPath p = Draw.Rounded(track, 11))
-            using (SolidBrush b = new SolidBrush(Checked ? t.Accent : t.Edge))
+            using (SolidBrush b = new SolidBrush(ColorUtil.Blend(t.Edge, t.Accent, (pos < 0f ? (Checked ? 1f : 0f) : pos))))
                 g.FillPath(b, p);
             int kd = 18;
-            int kx = Checked ? track.Right - kd - 2 : track.X + 2;
+            float sp = pos < 0f ? (Checked ? 1f : 0f) : pos;
+            int kx = track.X + 2 + (int)Math.Round((track.Right - kd - 2 - (track.X + 2)) * sp);
             using (SolidBrush b = new SolidBrush(Color.White))
                 g.FillEllipse(b, kx, track.Y + 2, kd, kd);
             using (Pen pen = new Pen(Color.FromArgb(40, 0, 0, 0)))

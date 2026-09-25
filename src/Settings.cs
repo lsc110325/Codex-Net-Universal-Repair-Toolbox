@@ -123,6 +123,7 @@ namespace CodexNetFix
         public bool OptGitExec = true;
         public string LastSeenVersion = "";
         public bool SuppressUpdateTip = false;
+        public bool EnableAnim = true;   // 界面动画（滑块/胶囊滑动/悬停过渡）
 
         public static string Dir()
         {
@@ -154,6 +155,7 @@ namespace CodexNetFix
                 s.OptGitExec = GetBool(t, "optGitExec", s.OptGitExec);
                 s.LastSeenVersion = GetStr(t, "lastSeenVersion", s.LastSeenVersion);
                 s.SuppressUpdateTip = GetBool(t, "suppressTip", s.SuppressUpdateTip);
+                s.EnableAnim = GetBool(t, "enableAnim", s.EnableAnim);
             }
             catch { }
             if (s.MonitorInterval < 15) s.MonitorInterval = 15;
@@ -178,7 +180,8 @@ namespace CodexNetFix
                 sb.AppendLine("  \"optGit\": " + (OptGit ? "true" : "false") + ",");
                 sb.AppendLine("  \"optGitExec\": " + (OptGitExec ? "true" : "false") + ",");
                 sb.AppendLine("  \"lastSeenVersion\": \"" + LastSeenVersion + "\",");
-                sb.AppendLine("  \"suppressTip\": " + (SuppressUpdateTip ? "true" : "false"));
+                sb.AppendLine("  \"suppressTip\": " + (SuppressUpdateTip ? "true" : "false") + ",");
+                sb.AppendLine("  \"enableAnim\": " + (EnableAnim ? "true" : "false"));
                 sb.AppendLine("}");
                 File.WriteAllText(FilePath(), sb.ToString(), new UTF8Encoding(false));
             }
