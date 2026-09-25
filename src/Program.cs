@@ -118,7 +118,7 @@ namespace CodexNetFix
             RoundButton mn = WinBtn("—", delegate { WindowState = FormWindowState.Minimized; });
             mn.Tag = "winbtn";
             RoundButton cl = WinBtn("✕", delegate { Close(); });
-            cl.Tag = "winclose"; cl.HoverFillColor = Color.FromArgb(255, 232, 82, 82); cl.HoverAlpha = 90;
+            cl.Tag = "winclose"; cl.HoverFillColor = Color.FromArgb(255, 232, 82, 82); cl.HoverAlpha = 60;
             winButtonsCache = new RoundButton[] { mn, cl };
             topBar.Controls.Add(mn); topBar.Controls.Add(cl);
             EventHandler place = delegate
@@ -275,7 +275,7 @@ namespace CodexNetFix
             b.CustomFill = Color.Empty;
             b.TextOverride = Color.White;
             b.HoverFillColor = Color.White;
-            b.HoverAlpha = 42;
+            b.HoverAlpha = 24;   // ≈9% 白，非常柔和
             b.NoPaint = true;           // 背景完全交给顶栏绘制
             b.Click += h;
             return b;
@@ -821,8 +821,8 @@ namespace CodexNetFix
                     {
                         rb.Ghost = true; rb.CustomFill = Color.Empty; rb.TextOverride = Color.White;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
-                        if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 90; }
-                        else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 42; }
+                        if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
+                        else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24;   // ≈9% 白，非常柔和 }
                     }
                     else rb.TextOverride = Color.Empty;
                 }
