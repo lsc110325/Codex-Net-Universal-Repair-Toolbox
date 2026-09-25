@@ -23,6 +23,8 @@ namespace CodexNetFix
         NavItem navRepair, navCheck, navAbout, navSettings;
         string currentPage = "repair";
         float pillX = -1f, pillW = 0f;   // 导航胶囊滑动
+        NavItem navPressItem = null;
+        bool dragMoved = false;
         Panel pageRepair, pageCheck, pageAbout, pageSettings;
         RoundPanel cardPort, cardOptions, cardActions, cardLog, cardCheckList, cardLook, cardBehave, cardStore, cardLogNow, cardLogPrev, cardHistory;
         TextBox txtPort, logBox;
@@ -111,7 +113,7 @@ namespace CodexNetFix
             navCheck = MakeNav("自检", 396, "check");
             navAbout = MakeNav("更新日志", 492, "about");
             navSettings = MakeNav("设置", 588, "settings");
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings }) topBar.Controls.Add(n.Box);
+            // 导航项不加入控件树：由 topBar 父级统一绘制 + 命中测试（子控件会擦除父级绘制）
 
             RoundButton mn = WinBtn("—", delegate { WindowState = FormWindowState.Minimized; });
             RoundButton cl = WinBtn("✕", delegate { Close(); });
@@ -128,7 +130,41 @@ namespace CodexNetFix
             topBar.Paint += delegate(object s, PaintEventArgs e) { DrawNavPills(e.Graphics); };
             topBar.MouseDown += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) DragWindow(); };
             titleLabel.MouseDown += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) DragWindow(); };
-            AttachDrag(topBar); AttachDrag(pic); AttachDrag(titleLabel);
+            AttachDrag(pic); AttachDrag(titleLabel);
+            topBar.MouseDown += delegate(object s, MouseEventArgs e)
+            {
+                navPressItem = HitNav(e.Location);
+                if (navPressItem == null && e.Button == MouseButtons.Left)
+                {
+                    dragOn = true; dragMoved = false; dragCursorStart = Cursor.Position; dragFormStart = Location;
+                }
+            };
+            topBar.MouseMove += delegate(object s, MouseEventArgs e)
+            {
+                if (dragOn)
+                {
+                    Point cur = Cursor.Position;
+                    if (Math.Abs(cur.X - dragCursorStart.X) + Math.Abs(cur.Y - dragCursorStart.Y) > 3) dragMoved = true;
+                    Location = new Point(dragFormStart.X + (cur.X - dragCursorStart.X), dragFormStart.Y + (cur.Y - dragCursorStart.Y));
+                }
+                NavItem h = HitNav(e.Location);
+                bool changed = false;
+                foreach (NavItem n in Navs()) { bool hv = (n == h); if (n.Hover != hv) { n.Hover = hv; changed = true; } }
+                if (changed) topBar.Invalidate();
+                topBar.Cursor = h != null ? Cursors.Hand : Cursors.SizeAll;
+            };
+            topBar.MouseUp += delegate(object s, MouseEventArgs e)
+            {
+                NavItem h = HitNav(e.Location);
+                if (navPressItem != null && h == navPressItem && !dragMoved) ShowPage(navPressItem.Key);
+                navPressItem = null; dragOn = false; dragMoved = false;
+            };
+            topBar.MouseLeave += delegate(object s, EventArgs e)
+            {
+                bool changed = false;
+                foreach (NavItem n in Navs()) if (n.Hover) { n.Hover = false; changed = true; }
+                if (changed) topBar.Invalidate();
+            };
             foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings }) { AttachDrag(n.Box); AttachDrag(n.Text); }
             AttachDrag(mn); AttachDrag(cl);
             Controls.Add(topBar);
@@ -141,6 +177,15 @@ namespace CodexNetFix
             public string Key = "";
             public string Caption = "";
             public bool Hover = false;
+        }
+
+        NavItem[] Navs() { return new NavItem[] { navRepair, navCheck, navAbout, navSettings }; }
+
+        NavItem HitNav(Point pt)
+        {
+            foreach (NavItem n in Navs())
+                if (n != null && n.Box != null && new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width, n.Box.Height).Contains(pt)) return n;
+            return null;
         }
 
         void AnimatePill()
@@ -176,15 +221,8 @@ namespace CodexNetFix
         void StyleNav()
         {
             if (navRepair == null) return;
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings })
-            {
-                n.Box.NoFill = true;
-                n.Box.BackColor = pal.Accent;
-                n.Box.Invalidate(true);
-            }
             if (topBar != null) topBar.Invalidate();
-        }
-        void DrawNavPills(Graphics g)
+        }        void DrawNavPills(Graphics g)
         {
             if (navRepair == null) return;
             Draw.Smooth(g);

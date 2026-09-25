@@ -195,6 +195,7 @@ namespace CodexNetFix
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            if (NoFill) return;   // 完全透明面板：不绘制，避免擦掉父级内容（导航滑块/文字）
             e.Graphics.Clear(Draw.EffectiveBack(this));
             Draw.Smooth(e.Graphics);
             Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
