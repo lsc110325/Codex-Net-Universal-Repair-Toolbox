@@ -116,6 +116,7 @@ namespace CodexNetFix
             // 导航项不加入控件树：由 topBar 父级统一绘制 + 命中测试（子控件会擦除父级绘制）
 
             RoundButton mn = WinBtn("—", delegate { WindowState = FormWindowState.Minimized; });
+            mn.Tag = "winbtn";
             RoundButton cl = WinBtn("✕", delegate { Close(); });
             cl.Tag = "winclose";
             topBar.Controls.Add(mn); topBar.Controls.Add(cl);
@@ -808,7 +809,7 @@ namespace CodexNetFix
                     }
                     else if (tag == "winbtn" || tag == "winclose")
                     {
-                        rb.Ghost = false; rb.CustomFill = pal.Accent; rb.TextOverride = Color.White; rb.TransparentPaint = false;
+                        rb.Ghost = true; rb.CustomFill = Color.Empty; rb.TextOverride = Color.White;   // 仅显示图标，无背景
                     }
                     else rb.TextOverride = Color.Empty;
                 }
