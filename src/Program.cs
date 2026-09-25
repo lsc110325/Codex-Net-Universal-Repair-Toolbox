@@ -529,26 +529,26 @@ namespace CodexNetFix
         void BuildAboutPage()
         {
             FlowLayoutPanel flow = new FlowLayoutPanel();
-            flow.Left = 0; flow.Top = 0; flow.Width = 790; flow.Height = 420;
+            flow.Left = 0; flow.Top = 150; flow.Width = 790; flow.Height = 292;
             flow.AutoScroll = true; flow.FlowDirection = FlowDirection.LeftToRight; flow.WrapContents = true;
             flow.Tag = "flowbg"; flow.Name = "versionFlow";
+            foreach (VersionLog v in AppVersion.All())
 
-            // 作者有话说（置顶显示）
-            RoundPanel author = MkCard("作者有话说", 0, 0, 768, 176);
-            author.Margin = new Padding(0, 0, 0, 12);
-            Label note = MkLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 18, 52, "opt");
-            note.AutoSize = false; note.Width = 726; note.Height = 112;
-            author.Controls.Add(note);
-            flow.Controls.Add(author);            foreach (VersionLog v in AppVersion.All())
             {
                 RoundPanel c = MkCard((v.Bate ? "测试版 · " : "正式版 · ") + v.Version, 0, 0, 768, 150);
                 c.Margin = new Padding(0, 0, 0, 12);
                 FillBullets(c, v.Items, 726, 21);
                 flow.Controls.Add(c);
             }
+            // 作者有话说：固定钉在更新日志页顶部（不随版本列表滚动）
+            RoundPanel authorFixed = MkCard("作者有话说", 0, 0, 790, 138);
+            Label noteFixed = MkLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 20, 50, "opt");
+            noteFixed.AutoSize = false; noteFixed.Width = 748; noteFixed.Height = 80;
+            authorFixed.Controls.Add(noteFixed);
+            pageAbout.Controls.Add(authorFixed);
             pageAbout.Controls.Add(flow);
 
-            cardHistory = MkCard("最近修复记录", 0, 434, 790, 210);
+            cardHistory = MkCard("最近修复记录", 0, 452, 790, 190);
             RoundButton clr = new RoundButton();
             clr.Text = "清空记录"; clr.Ghost = true;
             clr.Width = 86; clr.Height = 28; clr.Left = cardHistory.Width - 104; clr.Top = 10;
@@ -563,7 +563,7 @@ namespace CodexNetFix
             cardHistory.Controls.Add(clr);
 
             FlowLayoutPanel h = new FlowLayoutPanel();
-            h.Left = 18; h.Top = 46; h.Width = 754; h.Height = 148;
+            h.Left = 18; h.Top = 46; h.Width = 754; h.Height = 128;
             h.AutoScroll = true; h.FlowDirection = FlowDirection.TopDown; h.WrapContents = false;
             h.Tag = "flowbg"; h.Name = "historyList";
             h.Resize += delegate { foreach (Control c in h.Controls) c.Width = h.ClientSize.Width - 8; };
