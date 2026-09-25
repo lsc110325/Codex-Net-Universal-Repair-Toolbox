@@ -228,6 +228,9 @@ namespace CodexNetFix
         bool hover = false;
         bool down = false;
         float hoverT = 0f;
+        public Color HoverFillColor = Color.Empty;   // 指定则用该颜色的半透明悬停
+        public bool NoPaint = false;   // 只绘制文字（背景由父级负责）
+        public int HoverAlpha = 120;                 // 悬停不透明度 0-255
         float pressT = 0f;
 
         public RoundButton()
@@ -256,6 +259,14 @@ namespace CodexNetFix
 
         protected override void OnPaint(PaintEventArgs pevent)
         {
+            if (NoPaint)
+            {
+                Draw.Smooth(pevent.Graphics);
+                Rectangle rr0 = new Rectangle(0, 0, Width - 1, Height - 1);
+                Color tc0 = TextOverride != Color.Empty ? TextOverride : ForeColor;
+                TextRenderer.DrawText(pevent.Graphics, Text, Font, rr0, tc0, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                return;
+            }
             Graphics g = pevent.Graphics;
             Draw.Smooth(g);
             if (!TransparentPaint) g.Clear(Draw.EffectiveBack(this));
@@ -286,20 +297,20 @@ namespace CodexNetFix
             if (Primary)
             {
                 fill = t.Accent; txt = t.AccentText;
-                if (hover) fill = Blend(fill, Color.White, 0.12);
-                if (down) fill = Blend(fill, Color.Black, 0.08);
+                if (hoverT > 0f) fill = Blend(fill, Color.White, 0.12 * hoverT);
+                if (pressT > 0f) fill = Blend(fill, Color.Black, 0.08 * pressT);
             }
             else if (Ghost)
             {
-                fill = hover ? t.CardAlt : Color.Transparent;
+                // 悬停高亮：半透明（用 hover 直接判断，避免依赖动画状态）
+                if (HoverFillColor != Color.Empty) fill = Color.FromArgb(hover ? HoverAlpha : 0, HoverFillColor);
+                else fill = Color.FromArgb(hover ? 200 : 0, t.CardAlt);
                 txt = t.TextSub;
-                if (down) fill = t.AccentSoft;
             }
             else
             {
                 fill = t.Field; txt = t.Text; edge = t.Edge;
-                if (hover) fill = Blend(fill, t.Accent, 0.10);
-                if (down) fill = Blend(fill, t.Accent, 0.20);
+                fill = Blend(fill, t.Accent, 0.10f * hoverT + 0.16f * pressT);
             }
             using (GraphicsPath p = Draw.Rounded(r, Radius))
             {

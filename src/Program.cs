@@ -118,7 +118,8 @@ namespace CodexNetFix
             RoundButton mn = WinBtn("—", delegate { WindowState = FormWindowState.Minimized; });
             mn.Tag = "winbtn";
             RoundButton cl = WinBtn("✕", delegate { Close(); });
-            cl.Tag = "winclose";
+            cl.Tag = "winclose"; cl.HoverFillColor = Color.FromArgb(255, 232, 82, 82); cl.HoverAlpha = 90;
+            winButtonsCache = new RoundButton[] { mn, cl };
             topBar.Controls.Add(mn); topBar.Controls.Add(cl);
             EventHandler place = delegate
             {
@@ -179,6 +180,9 @@ namespace CodexNetFix
             public string Caption = "";
             public bool Hover = false;
         }
+
+        RoundButton[] winButtonsCache;
+        RoundButton[] WinButtons() { return winButtonsCache; }
 
         NavItem[] Navs() { return new NavItem[] { navRepair, navCheck, navAbout, navSettings }; }
 
@@ -266,10 +270,16 @@ namespace CodexNetFix
             RoundButton b = new RoundButton();
             b.Text = glyph; b.Width = 36; b.Height = 30; b.Top = 12; b.Radius = 15;
             b.Font = Draw.Ui(9f, FontStyle.Regular);
+            // 纯图标按钮：默认无背景，悬停时半透明高亮
+            b.Ghost = true;
+            b.CustomFill = Color.Empty;
+            b.TextOverride = Color.White;
+            b.HoverFillColor = Color.White;
+            b.HoverAlpha = 42;
+            b.NoPaint = true;           // 背景完全交给顶栏绘制
             b.Click += h;
             return b;
         }
-
         void FixWinButtons(Panel head, RoundButton mn, RoundButton mx, RoundButton cl)
         {
             EventHandler place = delegate
@@ -809,7 +819,10 @@ namespace CodexNetFix
                     }
                     else if (tag == "winbtn" || tag == "winclose")
                     {
-                        rb.Ghost = true; rb.CustomFill = Color.Empty; rb.TextOverride = Color.White;   // 仅显示图标，无背景
+                        rb.Ghost = true; rb.CustomFill = Color.Empty; rb.TextOverride = Color.White;
+                        // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
+                        if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 90; }
+                        else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 42; }
                     }
                     else rb.TextOverride = Color.Empty;
                 }
