@@ -532,7 +532,14 @@ namespace CodexNetFix
             flow.Left = 0; flow.Top = 0; flow.Width = 790; flow.Height = 420;
             flow.AutoScroll = true; flow.FlowDirection = FlowDirection.LeftToRight; flow.WrapContents = true;
             flow.Tag = "flowbg"; flow.Name = "versionFlow";
-            foreach (VersionLog v in AppVersion.All())
+
+            // 作者有话说（置顶显示）
+            RoundPanel author = MkCard("作者有话说", 0, 0, 768, 176);
+            author.Margin = new Padding(0, 0, 0, 12);
+            Label note = MkLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 18, 52, "opt");
+            note.AutoSize = false; note.Width = 726; note.Height = 112;
+            author.Controls.Add(note);
+            flow.Controls.Add(author);            foreach (VersionLog v in AppVersion.All())
             {
                 RoundPanel c = MkCard((v.Bate ? "测试版 · " : "正式版 · ") + v.Version, 0, 0, 768, 150);
                 c.Margin = new Padding(0, 0, 0, 12);

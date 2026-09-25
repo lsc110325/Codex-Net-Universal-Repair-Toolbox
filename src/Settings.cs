@@ -17,13 +17,21 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.100";
-        public const string Current = "v1.0.100";
-        public const string Last = "v26.9.26.300bate";
+        public const string Num = "1.0.125";
+        public const string Current = "v1.0.125";
+        public const string Last = "v1.0.100";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v26.9.26.300bate";
+        public const string Previous = "v1.0.100";
 
+        // 作者有话说（显示在更新日志页顶部）
+        public static string AuthorNote()
+        {
+            return "这是一名 15 岁高中生使用 DeepSeek V4.1 Flash 制作的一个小工具，会持续更新该工具，"
+                 + "可能有些地方 bug 很多，但我会努力学习完善的，未来还会制作更多的工具，感谢大家的支持！"
+                 + "由于高中学业紧张、住宿半月放假，来不及回复消息，"
+                 + "大家可以加入技术反馈 QQ 群：783904560 共同探讨与反馈问题。";
+        }
         public static string[] CurrentChanges()
         {
             return new string[] {
@@ -39,9 +47,13 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "更新日志新增「作者有话说」分区",
+                    "版本号升级为 v1.0.125"
+                },
                 new string[] {
                     "正式版发布：导航与更新提示改为完整圆弧圆角",
                     "版本号调整为 v1.0.100（首个正式版）",
@@ -87,7 +99,7 @@ namespace CodexNetFix
             {
                 VersionLog v = new VersionLog();
                 v.Version = vers[i];
-                v.Bate = true;
+                v.Bate = vers[i].StartsWith("v26.9.26.");
                 v.Items = items[i];
                 list.Add(v);
             }
@@ -215,7 +227,7 @@ namespace CodexNetFix
                         }
                     }
                 }
-                File.AppendAllText(f, line + "\r\n", new UTF8Encoding(false));
+                File.AppendAllText(f, line + "\r\n", new UTF8Encoding(true));
             }
             catch { }
         }
@@ -252,14 +264,14 @@ namespace CodexNetFix
                     lastKey = key; lastBase = t; count = 1;
                 }
                 if (lastKey.Length > 0) outp.Add(lastBase + (count > 1 ? ("  ×" + count) : ""));
-                File.WriteAllLines(f, outp.ToArray(), new UTF8Encoding(false));
+                File.WriteAllLines(f, outp.ToArray(), new UTF8Encoding(true));
             }
             catch { }
         }
 
         public static void Clear()
         {
-            try { File.WriteAllText(FilePath(), "", new UTF8Encoding(false)); } catch { }
+            try { File.WriteAllText(FilePath(), "", new UTF8Encoding(true)); } catch { }
         }
 
         public static List<string> Recent(int count)

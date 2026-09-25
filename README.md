@@ -3,7 +3,7 @@
 > 一键修复 **Codex / ChatGPT 桌面版 / Codex CLI / IDE 插件** 在本机无法联网的问题。
 > 自动探测本机代理、注入代理环境变量、修复配置、修复 git，并提供全面自检与一键回滚。
 
-![version](https://img.shields.io/badge/version-v1.0.100-blue)
+![version](https://img.shields.io/badge/version-v1.0.125-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -208,6 +208,14 @@ powershell -ExecutionPolicy Bypass -File tools\stress-test.ps1
 
 ---
 
+## 作者有话说
+
+> 这是一名 15 岁高中生使用 **DeepSeek V4.1 Flash** 制作的一个小工具，会持续更新该工具。
+> 可能有些地方 bug 很多，但我会努力学习完善的，未来还会制作更多的工具，感谢大家的支持！
+>
+> 由于高中学业紧张、住宿半月放假，来不及回复消息，大家可以加入**技术反馈 QQ 群：783904560** 共同探讨与反馈问题。
+
+---
 ## 贡献与许可
 
 - 欢迎提交 Issue / PR，请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)
