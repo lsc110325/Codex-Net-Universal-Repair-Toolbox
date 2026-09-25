@@ -611,13 +611,14 @@ namespace CodexNetFix
         void BuildAboutPage()
         {
             FlowLayoutPanel flow = new FlowLayoutPanel();
-            flow.Left = 0; flow.Top = 150; flow.Width = 790; flow.Height = 292;
+            flow.Left = 0; flow.Top = 150; flow.Width = 790; flow.Height = 330;
             flow.AutoScroll = true; flow.FlowDirection = FlowDirection.LeftToRight; flow.WrapContents = true;
             flow.Tag = "flowbg"; flow.Name = "versionFlow";
             foreach (VersionLog v in AppVersion.All())
 
             {
                 RoundPanel c = MkCard((v.Bate ? "测试版 · " : "正式版 · ") + v.Version, 0, 0, 768, 150);
+                c.Radius = 16;   // 圆角更明显
                 c.Margin = new Padding(0, 0, 0, 12);
                 FillBullets(c, v.Items, 726, 21);
                 flow.Controls.Add(c);
@@ -630,7 +631,7 @@ namespace CodexNetFix
             pageAbout.Controls.Add(authorFixed);
             pageAbout.Controls.Add(flow);
 
-            cardHistory = MkCard("最近修复记录", 0, 452, 790, 190);
+            cardHistory = MkCard("最近修复记录", 0, 492, 790, 150);
             RoundButton clr = new RoundButton();
             clr.Text = "清空记录"; clr.Ghost = true;
             clr.Width = 86; clr.Height = 28; clr.Left = cardHistory.Width - 104; clr.Top = 10;
@@ -645,7 +646,7 @@ namespace CodexNetFix
             cardHistory.Controls.Add(clr);
 
             FlowLayoutPanel h = new FlowLayoutPanel();
-            h.Left = 18; h.Top = 46; h.Width = 754; h.Height = 128;
+            h.Left = 18; h.Top = 46; h.Width = 754; h.Height = 88;
             h.AutoScroll = true; h.FlowDirection = FlowDirection.TopDown; h.WrapContents = false;
             h.Tag = "flowbg"; h.Name = "historyList";
             h.Resize += delegate { foreach (Control c in h.Controls) c.Width = h.ClientSize.Width - 8; };
