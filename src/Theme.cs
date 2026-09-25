@@ -164,7 +164,7 @@ namespace CodexNetFix
                 Job j = jobs[i];
                 float t = (float)(now - j.Start) / j.Duration;
                 if (t > 1f) t = 1f;
-                float e = 1f - (float)Math.Pow(1f - t, 3);   // ease-out cubic
+                float e = t < 0.5f ? (4f * t * t * t) : (1f - (float)Math.Pow(-2f * t + 2f, 3f) / 2f);   // ease-in-out cubic
                 try { j.Apply(e); j.Target.Invalidate(); } catch { }
                 if (t >= 1f)
                 {

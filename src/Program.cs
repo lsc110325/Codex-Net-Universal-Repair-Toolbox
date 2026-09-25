@@ -139,6 +139,7 @@ namespace CodexNetFix
             public RoundPanel Box;
             public Label Text;
             public string Key = "";
+            public string Caption = "";
             public bool Hover = false;
         }
 
@@ -151,62 +152,74 @@ namespace CodexNetFix
             float toX = target.Box.Left, toW = target.Box.Width;
             if (pillX < 0f) { pillX = toX; pillW = toW; return; }
             float fromX = pillX, fromW = pillW;
-            Anim.Start(topBar, 200, delegate(float e) { pillX = fromX + (toX - fromX) * e; pillW = fromW + (toW - fromW) * e; });
+            Anim.Start(topBar, 180, delegate(float e) { pillX = fromX + (toX - fromX) * e; pillW = fromW + (toW - fromW) * e; });
         }
 
-        void DrawNavPills(Graphics g)
-        {
-            if (navRepair == null) return;
-            Draw.Smooth(g);
-            // 激活项的白色胶囊（带滑动动画）
-            int px = pillX < 0f ? navRepair.Box.Left : (int)Math.Round(pillX);
-            int pw = pillW <= 0f ? navRepair.Box.Width : (int)Math.Round(pillW);
-            Rectangle pr = new Rectangle(px, navRepair.Box.Top, Math.Max(8, pw - 1), navRepair.Box.Height - 1);
-            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(pr, navRepair.Box.Height / 2))
-            using (SolidBrush sb = new SolidBrush(Color.White))
-                g.FillPath(sb, gp);
-            // 悬停项浅色胶囊
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings })
-            {
-                if (n.Key == currentPage || !n.Hover) continue;
-                Rectangle rr = new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width - 1, n.Box.Height - 1);
-                using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(rr, n.Box.Height / 2))
-                using (SolidBrush sb = new SolidBrush(Mix(pal.Accent, Color.White, 0.20)))
-                    g.FillPath(sb, gp);
-            }
-        }        NavItem MakeNav(string text, int left, string key)
+        NavItem MakeNav(string text, int left, string key)
         {
             NavItem n = new NavItem();
-            n.Key = key;
+            n.Key = key; n.Caption = text;
             n.Box = new RoundPanel();
             n.Box.Left = left; n.Box.Top = 10; n.Box.Width = 86; n.Box.Height = 32;
-            n.Box.Radius = 16;
+            n.Box.NoFill = true;
             n.Box.ShowEdge = false; n.Box.Tag = "navbox";
-            n.Box.Fill = pal.Accent; n.Box.BackColor = pal.Accent;
-            n.Box.Caption = text;
+            n.Box.BackColor = pal.Accent;
             n.Box.CaptionFont = Draw.Ui(9.5f, FontStyle.Regular);
-            n.Box.CaptionColor = Color.White;
             n.Box.Cursor = Cursors.Hand;
             EventHandler go = delegate { ShowPage(key); };
-            EventHandler enter = delegate { n.Hover = true; StyleNav(); };
-            EventHandler leave = delegate { n.Hover = false; StyleNav(); };
+            EventHandler enter = delegate { n.Hover = true; if (topBar != null) topBar.Invalidate(); };
+            EventHandler leave = delegate { n.Hover = false; if (topBar != null) topBar.Invalidate(); };
             n.Box.Click += go; n.Box.MouseEnter += enter; n.Box.MouseLeave += leave;
             return n;
-        }        void StyleNav()
+        }
+
+        void StyleNav()
         {
             if (navRepair == null) return;
             foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings })
             {
-                bool active = n.Key == currentPage;
-                Color fill = active ? Color.White : (n.Hover ? Mix(pal.Accent, Color.White, 0.18) : pal.Accent);
-                n.Box.Fill = fill; n.Box.Edge = fill; n.Box.BackColor = fill;
-                n.Box.CaptionColor = active ? pal.Accent : Color.White;
-                n.Box.Radius = n.Box.Height / 2;
+                n.Box.NoFill = true;
+                n.Box.BackColor = pal.Accent;
                 n.Box.Invalidate(true);
             }
             if (topBar != null) topBar.Invalidate();
         }
+        void DrawNavPills(Graphics g)
+        {
+            if (navRepair == null) return;
+            Draw.Smooth(g);
+            NavItem[] items = new NavItem[] { navRepair, navCheck, navAbout, navSettings };
 
+            // 悬停项：浅色圆角矩形
+            foreach (NavItem n in items)
+            {
+                if (n.Key == currentPage || !n.Hover) continue;
+                Rectangle hr = new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width - 1, n.Box.Height - 1);
+                using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(hr, 8))
+                using (SolidBrush sb = new SolidBrush(Mix(pal.Accent, Color.White, 0.20)))
+                    g.FillPath(sb, gp);
+            }
+
+            // 滑块：圆角矩形（radius 8，非两端半圆）
+            int px = pillX < 0f ? navRepair.Box.Left : (int)Math.Round(pillX);
+            int pw = pillW <= 0f ? navRepair.Box.Width : (int)Math.Round(pillW);
+            Rectangle pr = new Rectangle(px, navRepair.Box.Top, Math.Max(8, pw - 1), navRepair.Box.Height - 1);
+            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(pr, 8))
+            using (SolidBrush sb = new SolidBrush(Color.White))
+                g.FillPath(sb, gp);
+
+            // 文字：按滑块覆盖该导航项的比例，从白色渐变到强调色（避免“露馅”）
+            foreach (NavItem n in items)
+            {
+                Rectangle tr = new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width, n.Box.Height);
+                int x1 = Math.Max(tr.Left, pr.Left), x2 = Math.Min(tr.Right, pr.Right);
+                float cov = x2 > x1 ? (float)(x2 - x1) / tr.Width : 0f;
+                Color col = ColorUtil.Blend(Color.White, pal.Accent, cov);
+                Font f = n.Box.CaptionFont != null ? n.Box.CaptionFont : Draw.Ui(9.5f, FontStyle.Regular);
+                TextRenderer.DrawText(g, n.Caption, f, tr, col,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            }
+        }
         static Color Lighten(Color c, double t) { return Color.FromArgb(c.A, (int)(c.R + (255 - c.R) * t), (int)(c.G + (255 - c.G) * t), (int)(c.B + (255 - c.B) * t)); }
         static Color Darken(Color c, double t) { return Color.FromArgb(c.A, (int)(c.R * (1 - t)), (int)(c.G * (1 - t)), (int)(c.B * (1 - t))); }
         RoundButton WinBtn(string glyph, EventHandler h)
