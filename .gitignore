@@ -1,0 +1,28 @@
+# 构建产物
+*.exe
+*.dll
+*.pdb
+*.ico.bak
+
+# 本地测试与输出
+_selftest/
+dist/
+*.zip
+
+# 用户数据（切勿提交）
+settings.json
+history.log
+error.log
+navdiag.log
+startup.log
+
+# IDE / 编辑器
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Windows
+Thumbs.db
+Desktop.ini

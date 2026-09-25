@@ -1,0 +1,55 @@
+name: build
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Locate .NET Framework compiler
+        shell: pwsh
+        run: |
+          $paths = @(
+            'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe',
+            'C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
+          )
+          $csc = $paths | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $csc) { throw 'csc.exe not found' }
+          "CSC=$csc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build
+        shell: pwsh
+        run: |
+          pwsh -ExecutionPolicy Bypass -File src\build.ps1
+
+      - name: Smoke test (CLI)
+        shell: pwsh
+        run: |
+          .\Codex网络修复工具.exe --cli version
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodexNetworkFixTool
+          path: |
+            Codex网络修复工具.exe
+            assets/app.ico
+            README.md
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Codex网络修复工具.exe
