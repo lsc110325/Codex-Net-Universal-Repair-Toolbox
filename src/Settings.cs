@@ -17,12 +17,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.125";
-        public const string Current = "v1.0.125";
-        public const string Last = "v1.0.100";
+        public const string Num = "1.0.200";
+        public const string Current = "v1.0.200";
+        public const string Last = "v1.0.125";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.0.100";
+        public const string Previous = "v1.0.125";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -47,9 +47,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "界面动画：开关滑块 / 按钮过渡 / 导航滑块（圆角矩形 + ease-in-out）",
+                    "导航改为父级统一绘制 + 命中测试，修复文字与滑块消失",
+                    "最小化 / 关闭改为纯图标，悬停半透明高亮（不再刺眼）",
+                    "更新日志新增「作者有话说」并固定置顶",
+                    "版本号升级为 v1.0.200"
+                },
                 new string[] {
                     "更新日志新增「作者有话说」分区",
                     "版本号升级为 v1.0.125"
