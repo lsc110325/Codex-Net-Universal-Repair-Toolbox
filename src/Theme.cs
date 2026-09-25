@@ -45,6 +45,7 @@ namespace CodexNetFix
         public Color TextSub = Color.FromArgb(130, 136, 148);
         public Color TextFaint = Color.FromArgb(168, 174, 186);
         public Color Accent = Color.FromArgb(111, 168, 245);
+        public Color AccentDark = Color.FromArgb(78, 124, 200);   // 深色辅助色（选中/分层用）
         public Color AccentSoft = Color.FromArgb(233, 242, 255);
         public Color AccentText = Color.White;
         public Color Ok = Color.FromArgb(52, 168, 110);
@@ -62,6 +63,7 @@ namespace CodexNetFix
             Palette p = new Palette();
             p.DarkMode = dark;
             p.Accent = accent.Main;
+            p.AccentDark = ColorUtil.Darken(accent.Main, 0.22f);
             p.AccentSoft = accent.Soft;
             p.AccentText = accent.Text;
             if (dark)
@@ -131,11 +133,22 @@ namespace CodexNetFix
     {
         public static Color Blend(Color a, Color b, float t)
         {
-            if (t < 0f) t = 0f; if (t > 1f) t = 1f;
-            return Color.FromArgb((int)(a.R + (b.R - a.R) * t), (int)(a.G + (b.G - a.G) * t), (int)(a.B + (b.B - a.B) * t));
+            if (t < 0f) t = 0f;
+            if (t > 1f) t = 1f;
+            return Color.FromArgb(
+                (int)(a.R + (b.R - a.R) * t),
+                (int)(a.G + (b.G - a.G) * t),
+                (int)(a.B + (b.B - a.B) * t));
+        }
+
+        // 颜色加深（用于"深色辅助色"：选中态 / 分层按钮）
+        public static Color Darken(Color c, float t)
+        {
+            if (t < 0f) t = 0f;
+            if (t > 1f) t = 1f;
+            return Color.FromArgb(c.A, (int)(c.R * (1 - t)), (int)(c.G * (1 - t)), (int)(c.B * (1 - t)));
         }
     }
-
     // ---------- 轻量动画驱动（60fps，仅在动画进行时运行） ----------
     public static class Anim
     {
@@ -276,7 +289,7 @@ namespace CodexNetFix
             {
                 Rectangle cr = new Rectangle(0, 0, Width - 1, Height - 1);
                 using (GraphicsPath cp2 = Draw.Rounded(cr, Radius))
-                using (SolidBrush cb2 = new SolidBrush(hover ? Blend(CustomFill, Color.White, 0.10) : CustomFill))
+                using (SolidBrush cb2 = new SolidBrush(hover ? Blend(CustomFill, Color.Black, 0.12) : CustomFill))
                     g.FillPath(cb2, cp2);
                 Color ct = TextOverride != Color.Empty ? TextOverride : Color.White;
                 TextRenderer.DrawText(g, Text, Font, cr, ct, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
