@@ -920,7 +920,6 @@ namespace CodexNetFix
             btnIntervalPlus.Click += delegate { cfg.MonitorInterval = Math.Min(1800, cfg.MonitorInterval + 15); RefreshInterval(); };
             cardBehave.Controls.Add(btnIntervalMinus); cardBehave.Controls.Add(lblIntervalValue); cardBehave.Controls.Add(btnIntervalPlus);
             Label liquid = MkLabel("主题模式：液态玻璃（敬请期待）", 8.5f, FontStyle.Regular, 18, 246, "hint");
-            liquid.Enabled = false;
             cardBehave.Controls.Add(liquid);
 
             RoundPanel cardHotkeys = MkCard("快捷键", 0, 462, 386, 136);
