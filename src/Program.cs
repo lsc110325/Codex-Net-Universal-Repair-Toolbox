@@ -60,8 +60,9 @@ namespace CodexNetFix
             ApplyTheme();
 
             Resize += delegate { LayoutShell(); ApplyRoundRegion(); };
+            // 启用 DWM 毛玻璃（磨砂）背景
             ApplyRoundRegion();
-            Load += delegate { OnLoaded(); };
+            Load += delegate { TryEnableGlass(); OnLoaded(); };
             Shown += delegate { BeginInvoke(new Action(delegate { ShowStartupDialogs(); })); };
             FormClosing += delegate(object s, FormClosingEventArgs e)
             {
@@ -323,6 +324,12 @@ namespace CodexNetFix
                 Location = new Point(dragFormStart.X + (cur.X - dragCursorStart.X), dragFormStart.Y + (cur.Y - dragCursorStart.Y));
             };
             c.MouseUp += delegate(object s, MouseEventArgs e) { dragOn = false; };
+        }
+
+        // 标准控件（Label/TextBox/Panel）不支持半透明背景，需转成不透明色
+        static Color Opaque(Color c)
+        {
+            return c.A == 255 ? c : Color.FromArgb(255, c.R, c.G, c.B);
         }
 
         static Color Mix(Color a, Color b, double t)
@@ -789,9 +796,20 @@ namespace CodexNetFix
             SaveSettings(false);
         }
 
+        void TryEnableGlass()
+        {
+            try
+            {
+                // 玻璃色调：辅助色淡化后的半透明白（alpha 越大越不透）
+                Color tint = Color.FromArgb(120, 250, 252, 255);
+                Glass.Enable(Handle, tint);
+            }
+            catch { }
+        }
+
         void ApplyTheme()
         {
-            BackColor = pal.Bg;
+            BackColor = Opaque(pal.Bg);
             if (logBox != null) { logBox.BackColor = pal.Card; logBox.ForeColor = pal.TextSub; }
             if (checkList != null) checkList.BackColor = pal.Card;
             StyleTree(this);
@@ -811,7 +829,7 @@ namespace CodexNetFix
                     else if (tag == "row") { rp.Fill = pal.CardAlt; rp.Edge = pal.Edge; rp.BackColor = rp.Fill; }
                     else if (tag == "banner") { rp.Fill = pal.AccentSoft; rp.Edge = pal.Accent; rp.BackColor = rp.Fill; }
                     else if (tag == "fieldwrap") { rp.Fill = pal.Field; rp.Edge = pal.Edge; rp.BackColor = rp.Fill; }
-                    else { rp.Fill = pal.Card; rp.Edge = pal.Edge; rp.BackColor = rp.Fill; }
+                    else { rp.Fill = pal.Card; rp.Edge = pal.Edge; rp.BackColor = Opaque(rp.Fill); }
                 }
                 else if (c is RoundButton)
                 {
@@ -846,7 +864,7 @@ namespace CodexNetFix
                         else if (tag == "sub" || tag == "hint") lb.ForeColor = pal.TextSub;
                         else if (tag == "version") lb.ForeColor = pal.TextFaint;
                         else lb.ForeColor = pal.Text;
-                        lb.BackColor = Draw.EffectiveBack(lb);
+                        lb.BackColor = Opaque(Draw.EffectiveBack(lb));
                     }
                 }
                 else if (c is TextBox)
@@ -855,16 +873,16 @@ namespace CodexNetFix
                     if (c == logBox) { tb.BackColor = pal.Card; tb.ForeColor = pal.TextSub; }
                     else { tb.BackColor = pal.Field; tb.ForeColor = pal.Text; }
                 }
-                else if (c is FlowLayoutPanel) c.BackColor = (tag == "flowbg") ? pal.ContentBg : pal.Card;
+                else if (c is FlowLayoutPanel) c.BackColor = Opaque((tag == "flowbg") ? pal.ContentBg : pal.Card);
                 else if (c is Panel)
                 {
                     Panel pn = (Panel)c;
-                    if (tag == "sep") pn.BackColor = pal.Edge;
-                    else if (tag == "sidebar") pn.BackColor = pal.Sidebar;
-                    else if (tag == "content") pn.BackColor = pal.ContentBg;
-                    else if (tag == "page") pn.BackColor = pal.ContentBg;
+                    if (tag == "sep") pn.BackColor = Opaque(pal.Edge);
+                    else if (tag == "sidebar") pn.BackColor = Opaque(pal.Sidebar);
+                    else if (tag == "content") pn.BackColor = Opaque(pal.ContentBg);
+                    else if (tag == "page") pn.BackColor = Opaque(pal.ContentBg);
                     else if (tag == "topbar") { pn.BackColor = pal.Accent; }
-                    else pn.BackColor = pal.Bg;
+                    else pn.BackColor = Opaque(pal.Bg);
                 }
                 if (c.HasChildren) StyleTree(c);
             }

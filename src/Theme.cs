@@ -33,14 +33,63 @@ namespace CodexNetFix
         }
     }
 
+    // ---------- 毛玻璃（DWM Acrylic / Blur） ----------
+    public static class Glass
+    {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        struct WindowCompositionAttributeData { public int Attribute; public IntPtr Data; public int SizeOfData; }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        struct AccentPolicy { public int AccentState; public int AccentFlags; public int GradientColor; public int AnimationId; }
+
+        public static bool Enable(IntPtr hwnd, Color tint)
+        {
+            try
+            {
+                // GradientColor 为 0xAABBGGRR（ABGR 顺序）
+                int gradient = (tint.A << 24) | (tint.B << 16) | (tint.G << 8) | tint.R;
+                AccentPolicy policy = new AccentPolicy();
+                policy.AccentState = 4;      // ACCENT_ENABLE_ACRYLICBLURBEHIND（Win10 1803+）
+                policy.AccentFlags = 2;
+                policy.GradientColor = gradient;
+                int size = System.Runtime.InteropServices.Marshal.SizeOf(policy);
+                IntPtr ptr = System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
+                System.Runtime.InteropServices.Marshal.StructureToPtr(policy, ptr, false);
+                WindowCompositionAttributeData data = new WindowCompositionAttributeData();
+                data.Attribute = 19;         // WCA_ACCENT_POLICY
+                data.Data = ptr;
+                data.SizeOfData = size;
+                int hr = SetWindowCompositionAttribute(hwnd, ref data);
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(ptr);
+                if (hr != 0) return true;
+                policy.AccentState = 3;      // 回退：普通模糊
+                IntPtr ptr2 = System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
+                System.Runtime.InteropServices.Marshal.StructureToPtr(policy, ptr2, false);
+                data.Data = ptr2;
+                SetWindowCompositionAttribute(hwnd, ref data);
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(ptr2);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // 生成毛玻璃用的半透明颜色
+        public static Color Tint(Color c, int alpha)
+        {
+            return Color.FromArgb(Math.Max(0, Math.Min(255, alpha)), c.R, c.G, c.B);
+        }
+    }
     // 主题调色板：浅色（默认，白色主色）/ 深色
     public class Palette
     {
         public bool DarkMode = false;
-        public Color Bg = Color.FromArgb(255, 255, 255);
-        public Color Card = Color.FromArgb(255, 255, 255);
-        public Color CardAlt = Color.FromArgb(246, 247, 249);
-        public Color Edge = Color.FromArgb(230, 232, 236);
+        public Color Bg = Color.FromArgb(255, 255, 255, 255);
+        public Color Card = Color.FromArgb(255, 255, 255, 255);
+        public Color CardAlt = Color.FromArgb(255, 246, 247, 249);
+        public Color Edge = Color.FromArgb(255, 232, 238, 246);   // 毛玻璃风格：淡蓝白描边
         public Color Text = Color.FromArgb(28, 30, 34);
         public Color TextSub = Color.FromArgb(130, 136, 148);
         public Color TextFaint = Color.FromArgb(168, 174, 186);
@@ -54,9 +103,9 @@ namespace CodexNetFix
         public Color WarnSoft = Color.FromArgb(255, 246, 224);
         public Color Fail = Color.FromArgb(214, 82, 82);
         public Color FailSoft = Color.FromArgb(255, 238, 238);
-        public Color Field = Color.FromArgb(247, 248, 250);
-        public Color Sidebar = Color.FromArgb(241, 243, 246);
-        public Color ContentBg = Color.FromArgb(247, 249, 252);
+        public Color Field = Color.FromArgb(255, 247, 248, 250);
+        public Color Sidebar = Color.FromArgb(255, 247, 249, 252);
+        public Color ContentBg = Color.FromArgb(255, 245, 248, 252);
 
         public static Palette Create(bool dark, AccentPreset accent)
         {
@@ -193,7 +242,7 @@ namespace CodexNetFix
     {
         public int Radius = 16;
         public Color Fill = Color.White;
-        public Color Edge = Color.FromArgb(230, 232, 236);
+        public Color Edge = Color.FromArgb(255, 232, 238, 246);   // 毛玻璃风格：淡蓝白描边
         public bool ShowEdge = true;
         public string Caption = "";
         public bool NoFill = false;
