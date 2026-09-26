@@ -794,7 +794,8 @@ namespace CodexNetFix
             cardTools.Controls.Add(btnTokenMonitor); cardTools.Controls.Add(btnDebugKey); cardTools.Controls.Add(tip);
 
             pageToken.Controls.Add(cardChart); pageToken.Controls.Add(cardWarn); pageToken.Controls.Add(cardTools);
-            RefreshTokenPage();
+            lblTokenToday.Text = "打开 Token 优化分区后开始统计";
+            lblTokenWeek.Text = "";
         }
 
         void BuildMorePage()
@@ -1207,6 +1208,7 @@ namespace CodexNetFix
             RefreshSwatches();
             SetStatus("彩蛋颜色已解锁", pal.Ok);
             History.Add("彩蛋解锁", "成功", p.UnlockedName);
+            SetAccent(p.Key);
         }
 
         void RefreshTokenPage()
