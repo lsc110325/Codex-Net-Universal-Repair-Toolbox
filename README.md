@@ -3,12 +3,10 @@
 > 一键修复 **Codex / ChatGPT 桌面版 / Codex CLI / IDE 插件** 在本机无法联网的问题。
 > 自动探测本机代理、注入代理环境变量、修复配置、修复 git，并提供全面自检与一键回滚。
 
-![version](https://img.shields.io/badge/version-v1.1.125-blue)
+![version](https://img.shields.io/badge/version-v1.1.150-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple)
 ![license](https://img.shields.io/badge/license-MIT-green)
-
-![主界面](assets/screenshots/ui-repair.png)
 
 ---
 
@@ -16,7 +14,6 @@
 
 - [为什么需要它](#为什么需要它)
 - [功能特性](#功能特性)
-- [界面预览](#界面预览)
 - [快速开始](#快速开始)
 - [命令行用法](#命令行用法)
 - [工作原理](#工作原理)
@@ -59,24 +56,6 @@
 - **零依赖**：单文件 EXE，使用系统自带 .NET Framework 4.8 编译与运行，无需安装、无需管理员权限
 
 ---
-
-## 界面预览
-
-| 主界面（修复） | 自检结果 |
-|---|---|
-| ![修复](assets/screenshots/ui-repair.png) | ![自检](assets/screenshots/ui-check.png) |
-
-| 设置（主题色） | 更新日志 |
-|---|---|
-| ![设置](assets/screenshots/ui-settings.png) | ![更新日志](assets/screenshots/ui-about.png) |
-
-| 更多工具 |
-|---|
-| ![更多](assets/screenshots/ui-more.png) |
-
-| 快捷键设置 |
-|---|
-| ![快捷键](assets/screenshots/ui-hotkeys.png) |
 
 ---
 

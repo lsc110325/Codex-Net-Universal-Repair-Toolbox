@@ -22,12 +22,12 @@ namespace CodexNetFix
         Panel content;
         bool allowClose = false, closingWindow = false;
         int windowAnimToken = 0;
-        NavItem navRepair, navCheck, navMore, navAbout, navSettings;
+        NavItem navRepair, navCheck, navToken, navMore, navAbout, navSettings;
         string currentPage = "repair";
         float pillX = -1f, pillW = 0f;   // 导航胶囊滑动
         NavItem navPressItem = null;
         bool dragMoved = false;
-        Panel pageRepair, pageCheck, pageMore, pageAbout, pageSettings;
+        Panel pageRepair, pageCheck, pageToken, pageMore, pageAbout, pageSettings;
         RoundPanel cardPort, cardOptions, cardActions, cardLog, cardCheckList, cardLook, cardBehave, cardStore, cardLogNow, cardLogPrev, cardHistory;
         TextBox txtPort, logBox;
         Label lblPortHint, lblCheckSum, lblStorePath, lblVersion, lblIntervalValue, lblAccentName;
@@ -42,7 +42,12 @@ namespace CodexNetFix
         RoundPanel cardSideStatus;
         Panel topBar, sidebar, contentHost, bodyPanel, bottomBar;
         RoundButton btnLaunchProxy, btnAllInOne, btnSpeed, btnPack, btnSnap, btnRestore, btnPortQ, btnTimeQ;
-        RoundButton btnTokenTools, btnDebugKey;
+        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor;
+        SwitchBox swTokenWarn;
+        Label lblTokenToday, lblTokenWeek, lblTokenLimit, lblTokenWarnStatus;
+        TokenStatsChart tokenChart;
+        System.Windows.Forms.Timer tokenMonitorTimer;
+        bool tokenMonitoring = false;
         List<string> runLog = new List<string>();
 
         public MainForm()
@@ -80,6 +85,7 @@ namespace CodexNetFix
             };
             FormClosing += delegate(object s, FormClosingEventArgs e)
             {
+                if (tokenMonitorTimer != null) tokenMonitorTimer.Stop();
                 if (allowClose) return;
                 if (e.CloseReason != CloseReason.UserClosing) return;
                 e.Cancel = true;
@@ -205,11 +211,12 @@ namespace CodexNetFix
             titleLabel.AutoSize = true; titleLabel.Left = 50; titleLabel.Top = 17; titleLabel.Tag = "ontopbar";
             topBar.Controls.Add(pic); topBar.Controls.Add(titleLabel);
 
-            navRepair = MakeNav("修复", 300, "repair");
-            navCheck = MakeNav("自检", 396, "check");
-            navMore = MakeNav("更多", 492, "more");
-            navAbout = MakeNav("更新日志", 588, "about");
-            navSettings = MakeNav("设置", 684, "settings");
+            navRepair = MakeNav("修复", 280, "repair");
+            navCheck = MakeNav("自检", 376, "check");
+            navToken = MakeNav("Token优化", 472, "token");
+            navMore = MakeNav("更多", 568, "more");
+            navAbout = MakeNav("更新日志", 664, "about");
+            navSettings = MakeNav("设置", 760, "settings");
             // 导航项不加入控件树：由 topBar 父级统一绘制 + 命中测试（子控件会擦除父级绘制）
 
             RoundButton mn = WinBtn("—", delegate { AnimateMinimizeWindow(); });
@@ -263,7 +270,7 @@ namespace CodexNetFix
                 foreach (NavItem n in Navs()) if (n.Hover) { n.Hover = false; changed = true; }
                 if (changed) topBar.Invalidate();
             };
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings }) { AttachDrag(n.Box); AttachDrag(n.Text); }
+            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navToken, navMore, navAbout, navSettings }) { AttachDrag(n.Box); AttachDrag(n.Text); }
             AttachDrag(mn); AttachDrag(cl);
             Controls.Add(topBar);
         }
@@ -280,7 +287,7 @@ namespace CodexNetFix
         RoundButton[] winButtonsCache;
         RoundButton[] WinButtons() { return winButtonsCache; }
 
-        NavItem[] Navs() { return new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings }; }
+        NavItem[] Navs() { return new NavItem[] { navRepair, navCheck, navToken, navMore, navAbout, navSettings }; }
 
         NavItem HitNav(Point pt)
         {
@@ -292,7 +299,7 @@ namespace CodexNetFix
         void AnimatePill()
         {
             NavItem target = null;
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings })
+            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navToken, navMore, navAbout, navSettings })
                 if (n.Key == currentPage) target = n;
             if (target == null || topBar == null) return;
             float toX = target.Box.Left, toW = target.Box.Width;
@@ -329,7 +336,7 @@ namespace CodexNetFix
         {
             if (navRepair == null) return;
             Draw.Smooth(g);
-            NavItem[] items = new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings };
+            NavItem[] items = new NavItem[] { navRepair, navCheck, navToken, navMore, navAbout, navSettings };
 
             if (accent.Pattern == "dots")
             {
@@ -613,10 +620,10 @@ namespace CodexNetFix
         void BuildPages()
         {
             content = contentHost;
-            pageRepair = NewPage(); pageCheck = NewPage(); pageMore = NewPage(); pageAbout = NewPage(); pageSettings = NewPage();
-            content.Controls.Add(pageRepair); content.Controls.Add(pageCheck); content.Controls.Add(pageMore); content.Controls.Add(pageAbout); content.Controls.Add(pageSettings);
+            pageRepair = NewPage(); pageCheck = NewPage(); pageToken = NewPage(); pageMore = NewPage(); pageAbout = NewPage(); pageSettings = NewPage();
+            content.Controls.Add(pageRepair); content.Controls.Add(pageCheck); content.Controls.Add(pageToken); content.Controls.Add(pageMore); content.Controls.Add(pageAbout); content.Controls.Add(pageSettings);
             content.BringToFront();
-            BuildRepairPage(); BuildCheckPage(); BuildMorePage(); BuildSettingsPage(); BuildAboutPage();
+            BuildRepairPage(); BuildCheckPage(); BuildTokenPage(); BuildMorePage(); BuildSettingsPage(); BuildAboutPage();
             ShowPage("repair");
         }
 
@@ -737,6 +744,47 @@ namespace CodexNetFix
             }
         }
 
+        void BuildTokenPage()
+        {
+            RoundPanel cardChart = MkCard("Token 消耗", 0, 0, 486, 320);
+            lblTokenToday = MkLabel("", 10f, FontStyle.Bold, 18, 50, "opt");
+            lblTokenWeek = MkLabel("", 8.8f, FontStyle.Regular, 18, 78, "hint");
+            tokenChart = new TokenStatsChart();
+            tokenChart.Theme = pal; tokenChart.Left = 18; tokenChart.Top = 108; tokenChart.Width = 450; tokenChart.Height = 188;
+            cardChart.Controls.Add(lblTokenToday); cardChart.Controls.Add(lblTokenWeek); cardChart.Controls.Add(tokenChart);
+
+            RoundPanel cardWarn = MkCard("Token 预警", 502, 0, 288, 320);
+            swTokenWarn = MkSwitch("启用今日预警", 18, 54, cardWarn, 150);
+            swTokenWarn.CheckedChanged += delegate
+            {
+                cfg.TokenWarnEnabled = swTokenWarn.Checked;
+                cfg.Save(); RefreshTokenPage();
+            };
+            lblTokenLimit = MkLabel("", 9f, FontStyle.Regular, 18, 104, "opt");
+            RoundButton minus = new RoundButton();
+            minus.Text = "-"; minus.Left = 18; minus.Top = 138; minus.Width = 34; minus.Height = 30; minus.Theme = pal;
+            minus.Click += delegate { cfg.TokenWarnMillions = Math.Max(10, cfg.TokenWarnMillions - 10); cfg.Save(); RefreshTokenPage(); };
+            RoundButton plus = new RoundButton();
+            plus.Text = "+"; plus.Left = 104; plus.Top = 138; plus.Width = 34; plus.Height = 30; plus.Theme = pal;
+            plus.Click += delegate { cfg.TokenWarnMillions = Math.Min(10000, cfg.TokenWarnMillions + 10); cfg.Save(); RefreshTokenPage(); };
+            lblTokenWarnStatus = MkLabel("", 8.7f, FontStyle.Regular, 18, 190, "hint");
+            lblTokenWarnStatus.AutoSize = false; lblTokenWarnStatus.Width = 250; lblTokenWarnStatus.Height = 100;
+            cardWarn.Controls.Add(lblTokenLimit); cardWarn.Controls.Add(minus); cardWarn.Controls.Add(plus); cardWarn.Controls.Add(lblTokenWarnStatus);
+
+            RoundPanel cardTools = MkCard("Token 工具", 0, 336, 790, 262);
+            btnPonytail = MkAction("安装 / 更新 Ponytail", 18, 54, 240, delegate { InstallPonytail(); });
+            btnTokenGuide = MkAction("复制省 Token 提示词", 278, 54, 240, delegate { CopyTokenGuide(); });
+            btnTokenSpeed = MkAction("代理测速", 538, 54, 234, delegate { DoTokenSpeed(); });
+            btnTokenMonitor = MkAction("开始网络监测", 18, 112, 240, delegate { ToggleTokenMonitor(); });
+            btnDebugKey = MkAction("输入调试码", 278, 112, 240, delegate { DoDebugKey(); });
+            Label tip = MkLabel("Token 统计来自本机 Codex sessions 日志，按会话最后写入日期估算。", 8.5f, FontStyle.Regular, 18, 180, "hint");
+            cardTools.Controls.Add(btnPonytail); cardTools.Controls.Add(btnTokenGuide); cardTools.Controls.Add(btnTokenSpeed);
+            cardTools.Controls.Add(btnTokenMonitor); cardTools.Controls.Add(btnDebugKey); cardTools.Controls.Add(tip);
+
+            pageToken.Controls.Add(cardChart); pageToken.Controls.Add(cardWarn); pageToken.Controls.Add(cardTools);
+            RefreshTokenPage();
+        }
+
         void BuildMorePage()
         {
             RoundPanel cardTools = MkCard("实用工具", 0, 0, 486, 598);
@@ -774,12 +822,7 @@ namespace CodexNetFix
             });
             openToolDir.Height = 42;
 
-            btnTokenTools = MkAction("Token 优化", 18, 324, 216, delegate { DoTokenTools(); });
-            btnTokenTools.Height = 42; btnTokenTools.Primary = true;
-            btnDebugKey = MkAction("输入调试码", 252, 324, 216, delegate { DoDebugKey(); });
-            btnDebugKey.Height = 42;
-
-            Label sec = MkLabel("快捷操作", 9.5f, FontStyle.Bold, 18, 384, "cardtitle");
+            Label sec = MkLabel("快捷操作", 9.5f, FontStyle.Bold, 18, 342, "cardtitle");
             string[] keys = new string[] {
                 "Ctrl+F  一键修复网络配置",
                 "Ctrl+T  打开并执行全面自检",
@@ -787,7 +830,7 @@ namespace CodexNetFix
                 "F5      重新探测本机代理端口",
                 "Ctrl+M  打开当前“更多”工具页"
             };
-            int ky = 416;
+            int ky = 374;
             foreach (string s in keys)
             {
                 Label l = MkLabel(s, 9f, FontStyle.Regular, 18, ky, "hint");
@@ -796,7 +839,7 @@ namespace CodexNetFix
                 ky += 28;
             }
 
-            Label foot = MkLabel("提示：所有修复操作都会先备份原文件；配置快照可随时恢复。", 8.5f, FontStyle.Regular, 18, 552, "hint");
+            Label foot = MkLabel("提示：所有修复操作都会先备份原文件；配置快照可随时恢复。", 8.5f, FontStyle.Regular, 18, 526, "hint");
             foot.AutoSize = false; foot.Width = 450; foot.Height = 38;
 
             cardTools.Controls.Add(btnLaunchProxy); cardTools.Controls.Add(btnAllInOne);
@@ -804,7 +847,6 @@ namespace CodexNetFix
             cardTools.Controls.Add(btnSnap); cardTools.Controls.Add(btnRestore);
             cardTools.Controls.Add(btnPortQ); cardTools.Controls.Add(btnTimeQ);
             cardTools.Controls.Add(openCodexDir); cardTools.Controls.Add(openToolDir);
-            cardTools.Controls.Add(btnTokenTools); cardTools.Controls.Add(btnDebugKey);
             cardTools.Controls.Add(sec); cardTools.Controls.Add(foot);
 
             RoundPanel cardHelp = MkCard("功能说明", 502, 0, 288, 598);
@@ -1159,6 +1201,118 @@ namespace CodexNetFix
             History.Add("彩蛋解锁", "成功", p.UnlockedName);
         }
 
+        void RefreshTokenPage()
+        {
+            if (lblTokenToday == null) return;
+            List<Core.TokenDay> usage = Core.TokenUsageLast7Days();
+            long today = usage.Count > 0 ? usage[usage.Count - 1].Tokens : 0;
+            long week = 0; foreach (Core.TokenDay d in usage) week += d.Tokens;
+            lblTokenToday.Text = "今日：" + today.ToString("N0") + " tokens";
+            lblTokenWeek.Text = "近 7 日累计：" + week.ToString("N0") + " tokens";
+            if (tokenChart != null) { tokenChart.Data = usage; tokenChart.Invalidate(); }
+            if (swTokenWarn != null) swTokenWarn.Checked = cfg.TokenWarnEnabled;
+            long limit = (long)cfg.TokenWarnMillions * 1000000L;
+            if (lblTokenLimit != null) lblTokenLimit.Text = "今日预警阈值：" + cfg.TokenWarnMillions + "M";
+            if (lblTokenWarnStatus != null)
+            {
+                if (!cfg.TokenWarnEnabled) lblTokenWarnStatus.Text = "预警已关闭。";
+                else if (today >= limit) lblTokenWarnStatus.Text = "警告：今日 Token 已超过 " + cfg.TokenWarnMillions + "M，建议先查找现成资源或复用代码。";
+                else lblTokenWarnStatus.Text = "当前未超过预警阈值。";
+                lblTokenWarnStatus.ForeColor = (!cfg.TokenWarnEnabled || today < limit) ? pal.TextSub : pal.Fail;
+            }
+        }
+
+        void InstallPonytail()
+        {
+            btnPonytail.Enabled = false;
+            AppendLog("开始安装 / 更新 Ponytail...");
+            Thread t = new Thread(delegate ()
+            {
+                string cli = Core.FindCodexExe();
+                if (cli.Length == 0) cli = "codex";
+                Core.RunProcess(cli, "plugin marketplace add DietrichGebert/ponytail", 180000);
+                Core.RunProcess(cli, "plugin add ponytail@ponytail", 180000);
+                Core.RunProcess(cli, "plugin marketplace upgrade", 180000);
+                Core.RunProcess(cli, "plugin add ponytail@ponytail", 180000);
+                BeginInvoke(new Action(delegate
+                {
+                    btnPonytail.Enabled = true;
+                    SetStatus("Ponytail 安装/更新命令已执行，请重启 Codex 并信任 hooks。", pal.Ok);
+                    AppendLog("Ponytail 安装/更新命令已执行。");
+                    History.Add("Ponytail", "已执行", "安装/更新完成");
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void CopyTokenGuide()
+        {
+            string text = "先找现成方案，再写代码，尽量少消耗 Token：\n"
+                + "1. 先在 GitHub、官方文档和论坛搜索同类项目、组件或开源实现。\n"
+                + "2. 建模前先查 Poly Haven、Sketchfab、Blend Swap、Free3D、NASA 3D 等开放资源。\n"
+                + "3. 先复用现有代码、标准库、原生功能和已安装依赖。\n"
+                + "4. 明确输入、输出、验收标准，减少来回确认。\n"
+                + "5. 大任务拆分，只读取相关文件和必要上下文。\n"
+                + "6. 复杂改动先确认简短方案，再开始实现。\n";
+            try
+            {
+                Clipboard.SetText(text);
+                SetStatus("省 Token 提示词已复制到剪贴板。", pal.Ok);
+                History.Add("省 Token 提示词", "成功", "已复制");
+            }
+            catch { SetStatus("复制失败，请检查剪贴板权限。", pal.Fail); }
+        }
+
+        void DoTokenSpeed()
+        {
+            int p = SelectedPort();
+            if (p <= 0) p = Core.DetectProxyPort(null);
+            if (p <= 0) { SetStatus("未找到代理端口，无法测速。", pal.Warn); return; }
+            SetStatus("正在测试代理延迟...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                long best = -1;
+                string detail = Core.SpeedTest(p, out best);
+                BeginInvoke(new Action(delegate
+                {
+                    SetStatus(best >= 0 ? "代理测速完成，最佳延迟 " + best + " ms" : "代理测速失败", best >= 0 ? pal.Ok : pal.Fail);
+                    MessageBox.Show(detail, "代理测速", MessageBoxButtons.OK, best >= 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void ToggleTokenMonitor()
+        {
+            if (tokenMonitorTimer == null)
+            {
+                tokenMonitorTimer = new System.Windows.Forms.Timer();
+                tokenMonitorTimer.Interval = 5000;
+                tokenMonitorTimer.Tick += delegate { ProbeTokenMonitor(); };
+            }
+            tokenMonitoring = !tokenMonitoring;
+            btnTokenMonitor.Text = tokenMonitoring ? "停止网络监测" : "开始网络监测";
+            if (tokenMonitoring) { tokenMonitorTimer.Start(); ProbeTokenMonitor(); }
+            else { tokenMonitorTimer.Stop(); SetStatus("网络监测已停止", pal.TextSub); }
+        }
+
+        void ProbeTokenMonitor()
+        {
+            int p = SelectedPort();
+            if (p <= 0) p = Core.DetectProxyPort(null);
+            if (p <= 0) { SetStatus("未找到代理端口，无法监测", pal.Warn); return; }
+            Thread t = new Thread(delegate ()
+            {
+                string detail;
+                bool ok = Core.QuickProbe(p, out detail);
+                BeginInvoke(new Action(delegate
+                {
+                    SetStatus(ok ? "代理在线：" + detail : "代理异常：" + detail, ok ? pal.Ok : pal.Fail);
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
         void DoDebugKey()
         {
             if (cfg.DebugKeyUsed)
@@ -1183,12 +1337,6 @@ namespace CodexNetFix
             RefreshSwatches();
             SetStatus("调试码已使用，三个彩蛋颜色已解锁", pal.Ok);
             History.Add("调试码", "已使用", "解锁全部彩蛋颜色");
-        }
-
-        void DoTokenTools()
-        {
-            using (TokenToolsDialog dlg = new TokenToolsDialog(pal, SelectedPort()))
-                dlg.ShowDialog(this);
         }
 
         void RecordRepair()
@@ -1320,17 +1468,19 @@ namespace CodexNetFix
             currentPage = key;
             pageRepair.Visible = key == "repair";
             pageCheck.Visible = key == "check";
+            pageToken.Visible = key == "token";
             pageMore.Visible = key == "more";
             pageAbout.Visible = key == "about";
             pageSettings.Visible = key == "settings";
             if (key == "about") { RefreshHistory(); StyleTree(pageAbout); }
+            if (key == "token") RefreshTokenPage();
             StyleNav();
             AnimatePill();
             if (content != null) content.Invalidate(true);
         }
         void AdjustPageTop(int offset)
         {
-            foreach (Panel pg in new Panel[] { pageRepair, pageCheck, pageMore, pageAbout, pageSettings })
+            foreach (Panel pg in new Panel[] { pageRepair, pageCheck, pageToken, pageMore, pageAbout, pageSettings })
                 if (pg != null) pg.Padding = new Padding(0, offset, 0, 0);
         }
 

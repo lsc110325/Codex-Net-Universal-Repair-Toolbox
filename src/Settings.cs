@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.1.125";
-        public const string Current = "v1.1.125";
-        public const string Last = "v1.1.100";
+        public const string Num = "1.1.150";
+        public const string Current = "v1.1.150";
+        public const string Last = "v1.1.125";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.1.100";
+        public const string Previous = "v1.1.125";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,10 +36,11 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
-                "重做星空黑主题：深空渐变、星云、多层星点和十字星光",
-                "优化星空黑整体配色，卡片与背景改为深蓝黑层次",
-                "保留圆角与导航布局，避免黑色边框",
-                "版本更新为 v1.1.125"
+                "新增独立 Token 优化导航分区，移除“更多”页里的旧入口",
+                "新增今日常用 Token 统计、7 日柱状图和今日 Token 预警阈值",
+                "Token 分区整合 Ponytail、省 Token 提示词、代理测速和网络监测",
+                "新增 Token 预警开关和 10M 步进阈值调整",
+                "版本更新为 v1.1.150"
             };
         }
 
@@ -47,9 +48,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "新增独立 Token 优化导航分区，移除“更多”页旧入口",
+                    "新增今日 Token 统计、7 日柱状图和 Token 预警",
+                    "整合 Ponytail、省 Token 提示词、代理测速和网络监测",
+                    "新增预警开关与阈值调整",
+                    "版本更新为 v1.1.150"
+                },
                 new string[] {
                     "重做星空黑主题：深空渐变、星云、多层星点和十字星光",
                     "优化星空黑整体配色，卡片与背景改为深蓝黑层次",
@@ -275,6 +283,8 @@ namespace CodexNetFix
         public bool StarryUnlocked = false;
         public bool DebugKeyUsed = false;
         public int RepairCount = 0;
+        public bool TokenWarnEnabled = true;
+        public int TokenWarnMillions = 100;
 
         public static string Dir()
         {
@@ -314,6 +324,8 @@ namespace CodexNetFix
                 s.StarryUnlocked = GetBool(t, "starry", s.StarryUnlocked);
                 s.DebugKeyUsed = GetBool(t, "debugKeyUsed", s.DebugKeyUsed);
                 s.RepairCount = GetInt(t, "repairCount", s.RepairCount);
+                s.TokenWarnEnabled = GetBool(t, "tokenWarnEnabled", s.TokenWarnEnabled);
+                s.TokenWarnMillions = GetInt(t, "tokenWarnMillions", s.TokenWarnMillions);
                 s.HotkeysEnabled = GetBool(t, "hotkeysEnabled", s.HotkeysEnabled);
                 s.HotkeyRepair = GetStr(t, "hotkeyRepair", s.HotkeyRepair);
                 s.HotkeyCheck = GetStr(t, "hotkeyCheck", s.HotkeyCheck);
@@ -331,6 +343,7 @@ namespace CodexNetFix
             if (s.AccentKey == "easterblue" && !s.EasterBlueUnlocked) s.AccentKey = "blue";
             if (s.AccentKey == "infinitepink" && !s.InfinitePinkUnlocked) s.AccentKey = "blue";
             if (s.AccentKey == "starry" && !s.StarryUnlocked) s.AccentKey = "blue";
+            if (s.TokenWarnMillions < 1) s.TokenWarnMillions = 1;
             return s;
         }
 
@@ -361,6 +374,8 @@ namespace CodexNetFix
                 sb.AppendLine("  \"starry\": " + (StarryUnlocked ? "true" : "false") + ",");
                 sb.AppendLine("  \"debugKeyUsed\": " + (DebugKeyUsed ? "true" : "false") + ",");
                 sb.AppendLine("  \"repairCount\": " + RepairCount + ",");
+                sb.AppendLine("  \"tokenWarnEnabled\": " + (TokenWarnEnabled ? "true" : "false") + ",");
+                sb.AppendLine("  \"tokenWarnMillions\": " + TokenWarnMillions + ",");
                 sb.AppendLine("  \"hotkeysEnabled\": " + (HotkeysEnabled ? "true" : "false") + ",");
                 sb.AppendLine("  \"hotkeyRepair\": \"" + HotkeyRepair + "\",");
                 sb.AppendLine("  \"hotkeyCheck\": \"" + HotkeyCheck + "\",");
