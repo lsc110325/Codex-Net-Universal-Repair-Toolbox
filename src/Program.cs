@@ -421,7 +421,7 @@ namespace CodexNetFix
         RoundButton WinBtn(string glyph, EventHandler h)
         {
             RoundButton b = new RoundButton();
-            b.Text = glyph; b.Width = 36; b.Height = 30; b.Top = 12; b.Radius = 15;
+            b.Text = glyph; b.Width = 32; b.Height = 32; b.Top = 10; b.Radius = 16;
             b.Font = Draw.Ui(9f, FontStyle.Regular);
             // 纯图标按钮：默认无背景，悬停时半透明高亮
             b.Ghost = true;
@@ -1461,28 +1461,13 @@ namespace CodexNetFix
                     else if (tag == "winbtn" || tag == "winclose")
                     {
                         rb.Ghost = false;
-                        if (accent.Pattern.Length > 0)
-                        {
-                            rb.NoPaint = true;
-                            rb.TransparentPaint = true;
-                            rb.CustomFill = Color.Empty;
-                            rb.TextOverride = Color.White;
-                            rb.HoverFillColor = rb.Tag != null && rb.Tag.ToString() == "winclose"
-                                ? Color.FromArgb(255, 232, 82, 82) : Color.White;
-                            rb.HoverAlpha = rb.Tag != null && rb.Tag.ToString() == "winclose" ? 60 : 34;
-                        }
-                        else if (pal.DarkMode)
-                        {
-                            rb.NoPaint = false;
-                            rb.CustomFill = Color.FromArgb(255, 43, 58, 92);
-                            rb.TextOverride = Color.FromArgb(230, 239, 255);
-                        }
-                        else
-                        {
-                            rb.NoPaint = false;
-                            rb.CustomFill = Color.White;
-                            rb.TextOverride = pal.Accent;
-                        }
+                        rb.NoPaint = true;
+                        rb.TransparentPaint = true;
+                        rb.CustomFill = Color.Empty;
+                        rb.TextOverride = Color.White;
+                        rb.HoverFillColor = rb.Tag != null && rb.Tag.ToString() == "winclose"
+                            ? Color.FromArgb(255, 232, 82, 82) : Color.White;
+                        rb.HoverAlpha = rb.Tag != null && rb.Tag.ToString() == "winclose" ? 60 : 34;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
                         else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }
