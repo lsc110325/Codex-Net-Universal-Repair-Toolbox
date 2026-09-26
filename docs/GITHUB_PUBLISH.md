@@ -33,12 +33,13 @@ codex  chatgpt  openai  proxy  clash  windows  sandbox  network-troubleshooting 
 
 **痛点**：在 Windows 上，Codex 沙箱默认禁止非回环网络访问，并会注入黑洞代理 `HTTP_PROXY=http://127.0.0.1:9`，导致 Codex 内执行命令时全部断网；同时 `.env` 里的代理不会覆盖已存在的环境变量，手工排查非常耗时。
 
-**方案**：本工具自动探测本机可用代理端口（TCP + `CONNECT` 握手 + 真实出网验证），写入 `[shell_environment_policy.set]` 覆盖黑洞代理，注入 `GIT_EXEC_PATH` 并把 git TLS 切到 openssl，最后提供 11 项自检与一键回滚。
+**方案**：本工具自动探测本机可用代理端口（TCP + `CONNECT` 握手 + 真实出网验证），写入 `[shell_environment_policy.set]` 覆盖黑洞代理，注入 `GIT_EXEC_PATH` 并把 git TLS 切到 openssl，最后提供 11 项自检、一键回滚，以及代理启动、测速、快照和反馈包工具。
 
 **特点**：
 - 零依赖单文件 EXE，免安装、免管理员
 - 所有改动前自动备份，可完整还原
-- PCL 风格现代界面、四种辅助色、托盘代理监控、修复历史
+- PCL 风格现代界面、四种主题色、托盘代理监控、修复历史
+- 更多工具：启动代理软件、一键全流程、代理测速、配置快照、反馈包、端口与时间诊断
 - 完整 CLI，可脚本化批量部署
 
 ## 5. 首次发布步骤
@@ -47,7 +48,7 @@ codex  chatgpt  openai  proxy  clash  windows  sandbox  network-troubleshooting 
 # 在“开源文件”目录下
 git init
 git add .
-git commit -m "feat: initial public release v1.0.100"
+git commit -m "feat: release v1.0.225"
 git branch -M main
 git remote add origin https://github.com/<你的用户名>/Codex-Net-Universal-Repair-Toolbox.git
 git push -u origin main
@@ -57,7 +58,7 @@ git push -u origin main
 
 1. 本地构建：`powershell -ExecutionPolicy Bypass -File src\build.ps1`
 2. 在 GitHub → Releases → Draft a new release
-3. Tag 填 `v1.0.100`，标题填 `v1.0.100 正式版`
+3. Tag 填 `v1.0.225`，标题填 `v1.0.225`
 4. 把构建出的 `Codex网络修复工具.exe` 作为附件上传
 5. 说明可直接复制下方模板
 
@@ -66,13 +67,13 @@ git push -u origin main
 ## 6. Release 说明模板
 
 ```markdown
-## v1.0.100 正式版
+## v1.0.225
 
 ### 本次更新
-- 导航栏与红色更新提示改为完整圆弧圆角胶囊
-- 修复胶囊圆角被内部控件遮挡、导航选中态不显示的问题
-- 修复版本日志长度不匹配导致的启动异常
-- 版本号正式定为 v1.0.100
+- 新增「更多」分区：启动代理软件、一键全流程、代理测速、配置快照、反馈包、端口与时间诊断
+- 新增 Ctrl+F / Ctrl+T / Ctrl+R / F5 / Ctrl+M 快捷键
+- 新增命令行诊断入口
+- 修复窗口标题拖动和系统时间检查兼容性
 
 ### 下载
 - `Codex网络修复工具.exe`（单文件，免安装）

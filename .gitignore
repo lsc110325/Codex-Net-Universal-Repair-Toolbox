@@ -33,3 +33,6 @@ Desktop.ini
 **/BaiduYunGuanjia/**
 *.jpg-lx2
 %USERP*
+%USERP~1/
+.build-temp/
+_featuretest/

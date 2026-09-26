@@ -16,6 +16,12 @@
 3. 点 **【重启 Codex】**（会自动关闭 Codex 相关进程并重新打开）
 4. 点 **【全面自检】**，确认全部 `OK`
 
+也可以进入顶部 **【更多】** 分区，使用：
+
+- **启动代理软件**：自动查找并启动本机代理程序，也可手动选择 exe
+- **一键全流程**：修复 → 重启 Codex → 全面自检
+- **代理测速 / 反馈包 / 配置快照 / 端口排查 / 系统时间检查**
+
 ## 3. 自检项说明
 
 | 自检项 | 通过标准 |
@@ -48,14 +54,28 @@
 | Codex 配置 | `%USERPROFILE%\.codex\config.toml`、`.env` |
 | git 配置 | `%USERPROFILE%\.gitconfig` |
 
-## 6. 命令行
+## 6. 更多工具
+
+| 功能 | 说明 |
+|---|---|
+| 启动代理软件 | 自动发现 FlClash、iKuuu、v2rayN、Hiddify 等程序，并等待代理端口就绪 |
+| 一键全流程 | 适合首次使用，自动完成修复、重启和自检 |
+| 代理测速 | 测试百度、GitHub、OpenAI 域名的代理连接延迟 |
+| 配置快照 | 备份与恢复 `config.toml`、`.env`、`.gitconfig`，保存在 `%APPDATA%\CodexNetFix\snapshots` |
+| 反馈包 | 将报告、修复历史和设置打包到桌面，便于发送到 QQ 群 783904560 |
+| 端口 / 时间 | 检查端口占用者，并通过 HTTP 代理校验系统时间 |
+
+快捷键：`Ctrl+F` 修复 · `Ctrl+T` 自检 · `Ctrl+R` 重启 · `F5` 刷新 · `Ctrl+M` 更多
+
+## 7. 命令行
 
 ```powershell
 --cli version / detect / repair [端口] / check [端口] / e2e / rollback
 --cli restart-list / restart --yes / report [文件] / icon [文件] / preview [文件]
+--cli proxies / speed [端口] / snapshot / restore [文件] / feedback [端口] / port [端口] / timesync [端口]
 ```
 
-## 7. 自动化验收
+## 8. 自动化验收
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\selftest.ps1 -TestGitConfig

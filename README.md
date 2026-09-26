@@ -3,7 +3,7 @@
 > 一键修复 **Codex / ChatGPT 桌面版 / Codex CLI / IDE 插件** 在本机无法联网的问题。
 > 自动探测本机代理、注入代理环境变量、修复配置、修复 git，并提供全面自检与一键回滚。
 
-![version](https://img.shields.io/badge/version-v1.0.200-blue)
+![version](https://img.shields.io/badge/version-v1.0.225-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -52,7 +52,8 @@
 - **11 项全面自检**：端口、出网、配置、环境变量、git、回环保护等，逐项给出结论与建议
 - **一键回滚**：改动前自动备份（`*.bak-codexfix-*`），可完整还原（含删除工具新建的文件）
 - **修复历史**：自动记录并合并重复项（`×N`），支持一键清空
-- **界面友好**：PCL 风格现代界面、无边框圆角窗口、四种辅助色、托盘常驻、代理健康监控
+- **更多实用工具**：自动发现并启动代理软件、一键全流程、代理测速、配置快照、反馈包、端口占用与系统时间检查
+- **界面友好**：PCL 风格现代界面、无边框圆角窗口、四种主题色、托盘常驻、代理健康监控
 - **可脚本化**：完整 CLI 子命令，便于批量部署
 - **零依赖**：单文件 EXE，使用系统自带 .NET Framework 4.8 编译与运行，无需安装、无需管理员权限
 
@@ -64,13 +65,17 @@
 |---|---|
 | ![修复](assets/screenshots/ui-repair.png) | ![自检](assets/screenshots/ui-check.png) |
 
-| 设置（辅助色） | 更新日志 |
+| 设置（主题色） | 更新日志 |
 |---|---|
 | ![设置](assets/screenshots/ui-settings.png) | ![更新日志](assets/screenshots/ui-about.png) |
 
 | 首次启动提示 | 红色更新胶囊 |
 |---|---|
 | ![首启](assets/screenshots/ui-firstrun.png) | ![胶囊](assets/screenshots/ui-pill.png) |
+
+| 更多工具 |
+|---|
+| ![更多](assets/screenshots/ui-more.png) |
 
 ---
 
@@ -97,6 +102,13 @@ Codex网络修复工具.exe --cli rollback       # 还原备份
 Codex网络修复工具.exe --cli restart-list   # 查看将受影响的 Codex 进程
 Codex网络修复工具.exe --cli restart --yes  # 关闭并重启 Codex
 Codex网络修复工具.exe --cli report out.txt # 导出诊断报告
+Codex网络修复工具.exe --cli proxies         # 查找本机代理软件
+Codex网络修复工具.exe --cli speed 7890      # 代理测速
+Codex网络修复工具.exe --cli snapshot        # 创建配置快照
+Codex网络修复工具.exe --cli restore         # 恢复最新配置快照
+Codex网络修复工具.exe --cli feedback        # 生成反馈包
+Codex网络修复工具.exe --cli port 7890       # 端口占用排查
+Codex网络修复工具.exe --cli timesync 7890   # 系统时间检查
 ```
 
 ---

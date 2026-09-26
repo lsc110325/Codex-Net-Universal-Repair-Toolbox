@@ -20,12 +20,12 @@ namespace CodexNetFix
         bool busyMonitor = false;
 
         Panel content;
-        NavItem navRepair, navCheck, navAbout, navSettings;
+        NavItem navRepair, navCheck, navMore, navAbout, navSettings;
         string currentPage = "repair";
         float pillX = -1f, pillW = 0f;   // 导航胶囊滑动
         NavItem navPressItem = null;
         bool dragMoved = false;
-        Panel pageRepair, pageCheck, pageAbout, pageSettings;
+        Panel pageRepair, pageCheck, pageMore, pageAbout, pageSettings;
         RoundPanel cardPort, cardOptions, cardActions, cardLog, cardCheckList, cardLook, cardBehave, cardStore, cardLogNow, cardLogPrev, cardHistory;
         TextBox txtPort, logBox;
         Label lblPortHint, lblCheckSum, lblStorePath, lblVersion, lblIntervalValue, lblAccentName;
@@ -37,6 +37,7 @@ namespace CodexNetFix
         Label lblSideStatus, lblSideSub, lblSideHome;
         RoundPanel cardSideStatus;
         Panel topBar, sidebar, contentHost, bodyPanel, bottomBar;
+        RoundButton btnLaunchProxy, btnAllInOne, btnSpeed, btnPack, btnSnap, btnRestore, btnPortQ, btnTimeQ;
         List<string> runLog = new List<string>();
 
         public MainForm()
@@ -112,8 +113,9 @@ namespace CodexNetFix
 
             navRepair = MakeNav("修复", 300, "repair");
             navCheck = MakeNav("自检", 396, "check");
-            navAbout = MakeNav("更新日志", 492, "about");
-            navSettings = MakeNav("设置", 588, "settings");
+            navMore = MakeNav("更多", 492, "more");
+            navAbout = MakeNav("更新日志", 588, "about");
+            navSettings = MakeNav("设置", 684, "settings");
             // 导航项不加入控件树：由 topBar 父级统一绘制 + 命中测试（子控件会擦除父级绘制）
 
             RoundButton mn = WinBtn("—", delegate { WindowState = FormWindowState.Minimized; });
@@ -168,7 +170,7 @@ namespace CodexNetFix
                 foreach (NavItem n in Navs()) if (n.Hover) { n.Hover = false; changed = true; }
                 if (changed) topBar.Invalidate();
             };
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings }) { AttachDrag(n.Box); AttachDrag(n.Text); }
+            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings }) { AttachDrag(n.Box); AttachDrag(n.Text); }
             AttachDrag(mn); AttachDrag(cl);
             Controls.Add(topBar);
         }
@@ -185,7 +187,7 @@ namespace CodexNetFix
         RoundButton[] winButtonsCache;
         RoundButton[] WinButtons() { return winButtonsCache; }
 
-        NavItem[] Navs() { return new NavItem[] { navRepair, navCheck, navAbout, navSettings }; }
+        NavItem[] Navs() { return new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings }; }
 
         NavItem HitNav(Point pt)
         {
@@ -197,7 +199,7 @@ namespace CodexNetFix
         void AnimatePill()
         {
             NavItem target = null;
-            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navAbout, navSettings })
+            foreach (NavItem n in new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings })
                 if (n.Key == currentPage) target = n;
             if (target == null || topBar == null) return;
             float toX = target.Box.Left, toW = target.Box.Width;
@@ -232,7 +234,7 @@ namespace CodexNetFix
         {
             if (navRepair == null) return;
             Draw.Smooth(g);
-            NavItem[] items = new NavItem[] { navRepair, navCheck, navAbout, navSettings };
+            NavItem[] items = new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings };
 
             // 悬停项：浅色圆角矩形
             foreach (NavItem n in items)
@@ -471,10 +473,10 @@ namespace CodexNetFix
         void BuildPages()
         {
             content = contentHost;
-            pageRepair = NewPage(); pageCheck = NewPage(); pageAbout = NewPage(); pageSettings = NewPage();
-            content.Controls.Add(pageRepair); content.Controls.Add(pageCheck); content.Controls.Add(pageAbout); content.Controls.Add(pageSettings);
+            pageRepair = NewPage(); pageCheck = NewPage(); pageMore = NewPage(); pageAbout = NewPage(); pageSettings = NewPage();
+            content.Controls.Add(pageRepair); content.Controls.Add(pageCheck); content.Controls.Add(pageMore); content.Controls.Add(pageAbout); content.Controls.Add(pageSettings);
             content.BringToFront();
-            BuildRepairPage(); BuildCheckPage(); BuildSettingsPage(); BuildAboutPage();
+            BuildRepairPage(); BuildCheckPage(); BuildMorePage(); BuildSettingsPage(); BuildAboutPage();
             ShowPage("repair");
         }
 
@@ -551,6 +553,101 @@ namespace CodexNetFix
             b.SwatchSelected = (cfg.AccentKey == key);
             b.Click += delegate { SetAccent(key); };
             return b;
+        }
+
+        void BuildMorePage()
+        {
+            RoundPanel cardTools = MkCard("实用工具", 0, 0, 486, 598);
+
+            btnLaunchProxy = MkAction("启动代理软件", 18, 54, 216, delegate { DoLaunchProxy(); });
+            btnLaunchProxy.Height = 42; btnLaunchProxy.Primary = true;
+            btnAllInOne = MkAction("一键全流程", 252, 54, 216, delegate { DoAllInOne(); });
+            btnAllInOne.Height = 42;
+
+            btnSpeed = MkAction("代理测速", 18, 108, 216, delegate { DoSpeedTest(); });
+            btnSpeed.Height = 42;
+            btnPack = MkAction("打包反馈包", 252, 108, 216, delegate { DoFeedbackPack(); });
+            btnPack.Height = 42;
+
+            btnSnap = MkAction("创建配置快照", 18, 162, 216, delegate { DoCreateSnapshot(); });
+            btnSnap.Height = 42;
+            btnRestore = MkAction("恢复最新快照", 252, 162, 216, delegate { DoRestoreSnapshot(); });
+            btnRestore.Height = 42;
+
+            btnPortQ = MkAction("端口占用排查", 18, 216, 216, delegate { DoPortQuery(); });
+            btnPortQ.Height = 42;
+            btnTimeQ = MkAction("系统时间检查", 252, 216, 216, delegate { DoTimeQuery(); });
+            btnTimeQ.Height = 42;
+
+            RoundButton openCodexDir = MkAction("打开 Codex 目录", 18, 270, 216, delegate
+            {
+                try { Process.Start("explorer.exe", Core.CodexHome()); }
+                catch (Exception ex) { SetStatus("打开目录失败: " + ex.Message, pal.Fail); }
+            });
+            openCodexDir.Height = 42;
+            RoundButton openToolDir = MkAction("打开工具目录", 252, 270, 216, delegate
+            {
+                try { Process.Start("explorer.exe", AppSettings.Dir()); }
+                catch (Exception ex) { SetStatus("打开目录失败: " + ex.Message, pal.Fail); }
+            });
+            openToolDir.Height = 42;
+
+            Label sec = MkLabel("快捷操作", 9.5f, FontStyle.Bold, 18, 342, "cardtitle");
+            string[] keys = new string[] {
+                "Ctrl+F  一键修复网络配置",
+                "Ctrl+T  打开并执行全面自检",
+                "Ctrl+R  重启 Codex 客户端",
+                "F5      重新探测本机代理端口",
+                "Ctrl+M  打开当前“更多”工具页"
+            };
+            int ky = 374;
+            foreach (string s in keys)
+            {
+                Label l = MkLabel(s, 9f, FontStyle.Regular, 18, ky, "hint");
+                l.AutoSize = false; l.Width = 450; l.Height = 24;
+                cardTools.Controls.Add(l);
+                ky += 28;
+            }
+
+            Label foot = MkLabel("提示：所有修复操作都会先备份原文件；配置快照可随时恢复。", 8.5f, FontStyle.Regular, 18, 526, "hint");
+            foot.AutoSize = false; foot.Width = 450; foot.Height = 38;
+
+            cardTools.Controls.Add(btnLaunchProxy); cardTools.Controls.Add(btnAllInOne);
+            cardTools.Controls.Add(btnSpeed); cardTools.Controls.Add(btnPack);
+            cardTools.Controls.Add(btnSnap); cardTools.Controls.Add(btnRestore);
+            cardTools.Controls.Add(btnPortQ); cardTools.Controls.Add(btnTimeQ);
+            cardTools.Controls.Add(openCodexDir); cardTools.Controls.Add(openToolDir);
+            cardTools.Controls.Add(sec); cardTools.Controls.Add(foot);
+
+            RoundPanel cardHelp = MkCard("功能说明", 502, 0, 288, 598);
+            string[] help = new string[] {
+                "启动代理软件\n自动查找 Clash、FlClash、v2rayN、Hiddify 等常见代理程序，也可手动选择 exe。",
+                "一键全流程\n按顺序完成修复、重启 Codex 和全面自检，适合首次使用。",
+                "代理测速\n分别测试百度、GitHub、OpenAI 域名的代理连接延迟。",
+                "配置快照\n备份与恢复 config.toml、.env 和 .gitconfig。",
+                "反馈包\n整理诊断报告、修复历史和设置，生成到桌面。",
+                "端口 / 时间\n检查代理端口占用情况，并校验系统时间是否准确。"
+            };
+            int hy = 54;
+            foreach (string s in help)
+            {
+                Label l = MkLabel(s, 8.5f, FontStyle.Regular, 18, hy, "opt");
+                l.AutoSize = false; l.Width = 252; l.Height = 62;
+                cardHelp.Controls.Add(l);
+                hy += 70;
+            }
+
+            RoundPanel tip = new RoundPanel();
+            tip.Left = 18; tip.Top = 486; tip.Width = 252; tip.Height = 88;
+            tip.Radius = 12; tip.Tag = "banner"; tip.Fill = pal.AccentSoft; tip.Edge = pal.Accent;
+            Label t1 = MkLabel("遇到问题？", 9.5f, FontStyle.Bold, 14, 12, "opt");
+            Label t2 = MkLabel("请生成反馈包并发送到 QQ 群\n783904560，方便快速定位。", 8.5f, FontStyle.Regular, 14, 36, "hint");
+            t2.AutoSize = false; t2.Width = 224; t2.Height = 40;
+            tip.Controls.Add(t1); tip.Controls.Add(t2);
+            cardHelp.Controls.Add(tip);
+
+            pageMore.Controls.Add(cardTools);
+            pageMore.Controls.Add(cardHelp);
         }
 
         void BuildSettingsPage()
@@ -916,6 +1013,7 @@ namespace CodexNetFix
             currentPage = key;
             pageRepair.Visible = key == "repair";
             pageCheck.Visible = key == "check";
+            pageMore.Visible = key == "more";
             pageAbout.Visible = key == "about";
             pageSettings.Visible = key == "settings";
             if (key == "about") RefreshHistory();
@@ -927,7 +1025,7 @@ namespace CodexNetFix
         }
         void AdjustPageTop(int offset)
         {
-            foreach (Panel pg in new Panel[] { pageRepair, pageCheck, pageAbout, pageSettings })
+            foreach (Panel pg in new Panel[] { pageRepair, pageCheck, pageMore, pageAbout, pageSettings })
                 if (pg != null) pg.Padding = new Padding(0, offset, 0, 0);
         }
 
@@ -1208,6 +1306,297 @@ namespace CodexNetFix
             History.Add("清理旧版本", n > 0 ? "成功" : "未删除", n + " 项");
         }
 
+        void DoLaunchProxy()
+        {
+            SetStatus("正在查找本机代理软件...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                List<Core.ProxyApp> apps = Core.FindProxyApps();
+                BeginInvoke(new Action(delegate
+                {
+                    string path = "";
+                    if (apps.Count > 0)
+                    {
+                        using (ProxyChooser dlg = new ProxyChooser(apps, pal))
+                        {
+                            if (dlg.ShowDialog(this) == DialogResult.OK) path = dlg.Chosen;
+                        }
+                    }
+                    else
+                    {
+                        OpenFileDialog ofd = new OpenFileDialog();
+                        ofd.Title = "选择代理软件主程序";
+                        ofd.Filter = "可执行文件|*.exe";
+                        if (ofd.ShowDialog(this) == DialogResult.OK) path = ofd.FileName;
+                    }
+                    if (path.Length == 0 || !File.Exists(path))
+                    {
+                        SetStatus("未选择代理软件，已取消启动。", pal.Warn);
+                        return;
+                    }
+                    cfg.ProxyPath = path; cfg.Save();
+                    SetStatus("正在启动 " + Path.GetFileName(path) + "...", pal.Warn);
+                    Thread work = new Thread(delegate ()
+                    {
+                        string r = Core.LaunchProxy(path, lg);
+                        int p = r == "OK" ? Core.WaitForProxy(20, lg) : 0;
+                        BeginInvoke(new Action(delegate
+                        {
+                            foreach (string l in lg) AppendLog(l);
+                            if (p > 0)
+                            {
+                                txtPort.Text = p.ToString(); cfg.LastPort = p; cfg.Save();
+                                SetStatus("代理软件已启动，探测到端口 127.0.0.1:" + p, pal.Ok);
+                                UpdateSide("已就绪", "代理端口 127.0.0.1:" + p, "OK");
+                                History.Add("启动代理软件", "成功", Path.GetFileName(path) + " / 端口 " + p);
+                            }
+                            else if (r == "OK")
+                            {
+                                SetStatus("代理软件已启动，但暂未探测到端口；请在软件内点击“连接”或“系统代理”。", pal.Warn);
+                                History.Add("启动代理软件", "已启动未探测到端口", Path.GetFileName(path));
+                            }
+                            else
+                            {
+                                SetStatus("代理软件启动失败，请检查路径或权限。", pal.Fail);
+                                History.Add("启动代理软件", "失败", Path.GetFileName(path));
+                            }
+                        }));
+                    });
+                    work.IsBackground = true; work.Start();
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void DoAllInOne()
+        {
+            if (MessageBox.Show("将依次执行：修复网络配置 → 重启 Codex → 全面自检。\r\n\r\n建议先保存 Codex 中未完成的工作，确定继续吗？",
+                "一键全流程", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+
+            SaveSettings(false);
+            RepairOptions o = new RepairOptions();
+            o.Port = SelectedPort();
+            o.PatchCodexHome = swCodex.Checked;
+            o.WriteUserEnvVars = swUserEnv.Checked;
+            o.PatchGitTls = swGit.Checked;
+            o.PatchGitExecPath = swGitExec.Checked;
+            o.DomesticDirect = swDomestic != null && swDomestic.Checked;
+
+            runLog.Clear(); if (logBox != null) logBox.Clear();
+            SetStatus("一键全流程执行中，请稍候...", pal.Warn);
+            if (btnAllInOne != null) btnAllInOne.Enabled = false;
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                int used = 0;
+                List<CheckItem> items = null;
+                string restart = "SKIP";
+                try
+                {
+                    used = Core.Repair(o, lg);
+                    if (used > 0)
+                    {
+                        restart = Core.RestartCodex(lg, false);
+                        items = Core.SelfCheck(used, false, lg);
+                    }
+                }
+                catch (Exception ex) { lg.Add("异常: " + ex.Message); }
+                BeginInvoke(new Action(delegate
+                {
+                    foreach (string l in lg) AppendLog(l);
+                    if (btnAllInOne != null) btnAllInOne.Enabled = true;
+                    if (used > 0)
+                    {
+                        txtPort.Text = used.ToString(); cfg.LastPort = used; cfg.Save();
+                        if (items != null)
+                        {
+                            RenderChecks(items);
+                            int fl = 0;
+                            foreach (CheckItem c in items) if (c.Status == "FAIL") fl++;
+                            lblCheckSum.Text = "全流程自检：" + (fl == 0 ? "全部通过" : (fl + " 项失败"));
+                            SetStatus(fl == 0 ? "一键全流程完成，自检通过。" : "一键全流程完成，但有 " + fl + " 项自检失败。", fl == 0 ? pal.Ok : pal.Fail);
+                        }
+                        else SetStatus("网络配置已修复，自检未完成。", pal.Warn);
+                        ShowPage("check");
+                        History.Add("一键全流程", restart == "OK" ? "成功" : "修复完成", "端口 " + used + " / 重启 " + restart);
+                    }
+                    else
+                    {
+                        SetStatus("一键全流程中止：未找到可用代理端口。", pal.Fail);
+                        History.Add("一键全流程", "失败", "未找到可用代理端口");
+                    }
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void DoSpeedTest()
+        {
+            SetStatus("正在测试代理连接速度...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                int p = SelectedPort();
+                if (p <= 0) p = Core.DetectProxyPort(lg);
+                long best = -1;
+                string result = p > 0 ? Core.SpeedTest(p, out best) : "";
+                BeginInvoke(new Action(delegate
+                {
+                    foreach (string l in lg) AppendLog(l);
+                    if (p <= 0)
+                    {
+                        SetStatus("未找到可用代理端口，无法测速。", pal.Fail);
+                        MessageBox.Show("未找到可用代理端口。\r\n请先启动代理软件，再点击“自动探测”。", "代理测速", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    string msg = "代理端口：127.0.0.1:" + p + "\r\n\r\n" + result + "\r\n最佳延迟：" + (best >= 0 ? best + " ms" : "无法连接");
+                    AppendLog("代理测速：\r\n" + msg);
+                    SetStatus(best >= 0 ? "代理测速完成，最佳延迟 " + best + " ms。" : "代理测速失败，请检查代理连接。", best >= 0 ? pal.Ok : pal.Fail);
+                    History.Add("代理测速", best >= 0 ? "成功" : "失败", "端口 " + p + " / 最佳 " + best + " ms");
+                    MessageBox.Show(msg, "代理测速结果", MessageBoxButtons.OK, best >= 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void DoFeedbackPack()
+        {
+            SetStatus("正在生成反馈包...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                int p = SelectedPort();
+                if (p <= 0) p = Core.DetectProxyPort(lg);
+                string zip = Core.MakeFeedbackPackage(p, lg);
+                BeginInvoke(new Action(delegate
+                {
+                    foreach (string l in lg) AppendLog(l);
+                    if (zip.Length > 0 && File.Exists(zip))
+                    {
+                        SetStatus("反馈包已生成到桌面：" + Path.GetFileName(zip), pal.Ok);
+                        History.Add("打包反馈包", "成功", zip);
+                        if (MessageBox.Show("反馈包已生成到桌面：\r\n" + zip + "\r\n\r\n是否立即打开所在文件夹？",
+                            "打包完成", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                            try { Process.Start("explorer.exe", "/select,\"" + zip + "\""); } catch { }
+                    }
+                    else
+                    {
+                        SetStatus("反馈包生成失败，请查看运行日志。", pal.Fail);
+                        History.Add("打包反馈包", "失败", "");
+                    }
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void DoCreateSnapshot()
+        {
+            SetStatus("正在创建配置快照...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                string zip = Core.CreateSnapshot(lg);
+                BeginInvoke(new Action(delegate
+                {
+                    foreach (string l in lg) AppendLog(l);
+                    if (zip.Length > 0)
+                    {
+                        SetStatus("配置快照已创建：" + Path.GetFileName(zip), pal.Ok);
+                        History.Add("创建配置快照", "成功", Path.GetFileName(zip));
+                    }
+                    else
+                    {
+                        SetStatus("配置快照创建失败。", pal.Fail);
+                        History.Add("创建配置快照", "失败", "");
+                    }
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void DoRestoreSnapshot()
+        {
+            List<string> snaps = Core.ListSnapshots();
+            if (snaps.Count == 0)
+            {
+                MessageBox.Show("还没有配置快照。\r\n请先点击“创建配置快照”。", "恢复配置快照", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Title = "选择要恢复的配置快照";
+            ofd.InitialDirectory = Core.SnapshotsDir();
+            ofd.Filter = "配置快照|snapshot-*.zip";
+            ofd.FileName = Path.GetFileName(snaps[0]);
+            if (ofd.ShowDialog(this) != DialogResult.OK) return;
+            if (MessageBox.Show("恢复快照会覆盖当前 config.toml、.env 和 .gitconfig。\r\n\r\n确定恢复吗？",
+                "恢复配置快照", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
+
+            string zip = ofd.FileName;
+            SetStatus("正在恢复配置快照...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                bool ok = Core.RestoreSnapshot(zip, lg);
+                BeginInvoke(new Action(delegate
+                {
+                    foreach (string l in lg) AppendLog(l);
+                    SetStatus(ok ? "配置快照已恢复，建议重启 Codex。" : "配置快照恢复失败。", ok ? pal.Ok : pal.Fail);
+                    History.Add("恢复配置快照", ok ? "成功" : "失败", Path.GetFileName(zip));
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void DoPortQuery()
+        {
+            int p = SelectedPort();
+            if (p <= 0)
+            {
+                MessageBox.Show("请先填写或自动探测代理端口。", "端口占用排查", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            string result = Core.WhoOwnsPort(p);
+            AppendLog("端口排查：" + result);
+            SetStatus(result, pal.Ok);
+            History.Add("端口占用排查", "完成", result);
+            MessageBox.Show(result, "端口占用排查", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        void DoTimeQuery()
+        {
+            int p = SelectedPort();
+            if (p <= 0)
+            {
+                MessageBox.Show("请先填写或自动探测代理端口。", "系统时间检查", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            SetStatus("正在检查系统时间...", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                string result = Core.CheckTimeSync(p);
+                BeginInvoke(new Action(delegate
+                {
+                    AppendLog("时间检查：" + result);
+                    bool ok = result.IndexOf("正确") >= 0;
+                    SetStatus(result, ok ? pal.Ok : pal.Warn);
+                    History.Add("系统时间检查", ok ? "正常" : "需要检查", result);
+                    MessageBox.Show(result, "系统时间检查", MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.F)) { ShowPage("repair"); DoRepair(); return true; }
+            if (keyData == (Keys.Control | Keys.T)) { ShowPage("check"); DoCheck(true); return true; }
+            if (keyData == (Keys.Control | Keys.R)) { DoRestart(); return true; }
+            if (keyData == Keys.F5) { ShowPage("repair"); DoDetect(); return true; }
+            if (keyData == (Keys.Control | Keys.M)) { ShowPage("more"); return true; }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         void ShowStartupDialogs()
         {
             try
@@ -1371,6 +1760,40 @@ namespace CodexNetFix
                 e.Graphics.DrawPath(pen, gp);
         }
     }
+    // 多个代理软件时的选择对话框
+    public class ProxyChooser : Form
+    {
+        public string Chosen = "";
+        public ProxyChooser(List<Core.ProxyApp> apps, Palette pal)
+        {
+            Text = "选择要启动的代理软件";
+            StartPosition = FormStartPosition.CenterParent;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false; MinimizeBox = false;
+            ClientSize = new Size(620, 320);
+            BackColor = Color.White;
+            Font = Draw.Ui(9.5f, FontStyle.Regular);
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Label t = new Label();
+            t.Text = "检测到多个代理软件，请选择要启动的那个（会记住你的选择）：";
+            t.AutoSize = true; t.Left = 16; t.Top = 14; t.ForeColor = pal.Text;
+            ListBox lb = new ListBox();
+            lb.Left = 16; lb.Top = 42; lb.Width = 588; lb.Height = 200;
+            foreach (Core.ProxyApp a in apps) lb.Items.Add(a.Name + "    —    " + a.Path);
+            if (lb.Items.Count > 0) lb.SelectedIndex = 0;
+            Button ok = new Button();
+            ok.Text = "启动这个"; ok.Left = 380; ok.Top = 258; ok.Width = 110; ok.Height = 34;
+            ok.Click += delegate
+            {
+                if (lb.SelectedIndex >= 0) { Chosen = apps[lb.SelectedIndex].Path; DialogResult = DialogResult.OK; Close(); }
+            };
+            Button cancel = new Button();
+            cancel.Text = "取消"; cancel.Left = 500; cancel.Top = 258; cancel.Width = 104; cancel.Height = 34;
+            cancel.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
+            Controls.Add(t); Controls.Add(lb); Controls.Add(ok); Controls.Add(cancel);
+        }
+    }
     public static class Program
     {
         [System.Runtime.InteropServices.DllImport("kernel32.dll")]
@@ -1490,6 +1913,78 @@ namespace CodexNetFix
                 string r = Core.RestartCodex(lg, false);
                 foreach (string l in lg) Console.WriteLine(l);
                 Console.WriteLine("RESULT=" + r);
+                return;
+            }
+            if (action == "proxies")
+            {
+                List<Core.ProxyApp> apps = Core.FindProxyApps();
+                foreach (Core.ProxyApp a in apps) Console.WriteLine("PROXY=" + a.Name + "|" + a.Path);
+                Console.WriteLine("COUNT=" + apps.Count);
+                return;
+            }
+            if (action == "speed")
+            {
+                int sp = 0;
+                if (args.Length > 2) int.TryParse(args[2], out sp);
+                if (sp <= 0) sp = Core.DetectProxyPort(lg);
+                if (sp <= 0) { Console.WriteLine("RESULT=NO_PROXY"); return; }
+                long best = -1;
+                string speed = Core.SpeedTest(sp, out best);
+                foreach (string l in lg) Console.WriteLine(l);
+                Console.Write(speed);
+                Console.WriteLine("RESULT=" + (best >= 0 ? "OK" : "FAIL") + " PORT=" + sp + " BEST=" + best);
+                return;
+            }
+            if (action == "snapshot")
+            {
+                string snap = Core.CreateSnapshot(lg);
+                foreach (string l in lg) Console.WriteLine(l);
+                Console.WriteLine("SNAPSHOT=" + snap);
+                Console.WriteLine("RESULT=" + (snap.Length > 0 ? "OK" : "FAIL"));
+                return;
+            }
+            if (action == "restore")
+            {
+                string snap = args.Length > 2 ? args[2] : "";
+                if (snap.Length == 0)
+                {
+                    List<string> snaps = Core.ListSnapshots();
+                    if (snaps.Count > 0) snap = snaps[0];
+                }
+                bool ok = snap.Length > 0 && File.Exists(snap) && Core.RestoreSnapshot(snap, lg);
+                foreach (string l in lg) Console.WriteLine(l);
+                Console.WriteLine("RESULT=" + (ok ? "OK" : "FAIL"));
+                return;
+            }
+            if (action == "feedback")
+            {
+                int fp = 0;
+                if (args.Length > 2) int.TryParse(args[2], out fp);
+                if (fp <= 0) fp = Core.DetectProxyPort(lg);
+                string pack = Core.MakeFeedbackPackage(fp, lg);
+                foreach (string l in lg) Console.WriteLine(l);
+                Console.WriteLine("FEEDBACK=" + pack);
+                Console.WriteLine("RESULT=" + (pack.Length > 0 ? "OK" : "FAIL"));
+                return;
+            }
+            if (action == "port")
+            {
+                int pp = 0;
+                if (args.Length > 2) int.TryParse(args[2], out pp);
+                if (pp <= 0) pp = Core.DetectProxyPort(lg);
+                Console.WriteLine(Core.WhoOwnsPort(pp));
+                Console.WriteLine("RESULT=" + (pp > 0 ? "OK" : "NO_PROXY"));
+                return;
+            }
+            if (action == "timesync")
+            {
+                int tp = 0;
+                if (args.Length > 2) int.TryParse(args[2], out tp);
+                if (tp <= 0) tp = Core.DetectProxyPort(lg);
+                if (tp <= 0) { Console.WriteLine("RESULT=NO_PROXY"); return; }
+                string timeResult = Core.CheckTimeSync(tp);
+                Console.WriteLine(timeResult);
+                Console.WriteLine("RESULT=" + (timeResult.IndexOf("正确") >= 0 ? "OK" : "WARN"));
                 return;
             }
             if (action == "report")

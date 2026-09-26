@@ -17,12 +17,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.200";
-        public const string Current = "v1.0.200";
-        public const string Last = "v1.0.125";
+        public const string Num = "1.0.225";
+        public const string Current = "v1.0.225";
+        public const string Last = "v1.0.200";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.0.125";
+        public const string Previous = "v1.0.200";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -35,6 +35,11 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
+                "新增「更多」导航分区，集中提供代理启动、一键全流程、测速和诊断工具",
+                "支持自动发现并启动 Clash、FlClash、v2rayN、iKuuu 等代理软件",
+                "新增配置快照、桌面反馈包、端口占用排查和系统时间检查",
+                "新增 Ctrl+F / Ctrl+T / Ctrl+R / F5 / Ctrl+M 快捷键",
+                "新增命令行诊断入口，方便自动化和群友反馈",
                 "修复「最近修复记录」被重复自检刷屏的问题",
                 "历史记录支持连续合并计数（×N）与一键清空",
                 "记录卡片加高、行宽自适应，长文本不再截断",
@@ -47,9 +52,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "新增「更多」分区：代理启动 / 一键全流程 / 测速 / 快照 / 反馈包 / 诊断",
+                    "支持自动发现并启动 FlClash、iKuuu、v2rayN、Hiddify 等代理软件",
+                    "新增配置快照、端口占用排查、系统时间检查和命令行诊断入口",
+                    "新增窗口标题拖动修复与 Ctrl+F / Ctrl+T / Ctrl+R / F5 / Ctrl+M 快捷键",
+                    "版本更新为 v1.0.225"
+                },
                 new string[] {
                     "界面动画：开关滑块 / 按钮过渡 / 导航滑块（圆角矩形 + ease-in-out）",
                     "导航改为父级统一绘制 + 命中测试，修复文字与滑块消失",
@@ -132,6 +144,7 @@ namespace CodexNetFix
         public bool SuppressUpdateTip = false;
         public bool EnableAnim = true;   // 界面动画（滑块/胶囊滑动/悬停过渡）
         public bool DomesticDirect = false;   // 国内网络直连（国内站点不走代理）
+        public string ProxyPath = "";        // 代理软件可执行文件路径（记住用户选择）
 
         public static string Dir()
         {
@@ -165,6 +178,7 @@ namespace CodexNetFix
                 s.SuppressUpdateTip = GetBool(t, "suppressTip", s.SuppressUpdateTip);
                 s.EnableAnim = GetBool(t, "enableAnim", s.EnableAnim);
                 s.DomesticDirect = GetBool(t, "domesticDirect", s.DomesticDirect);
+                s.ProxyPath = GetStr(t, "proxyPath", s.ProxyPath);
             }
             catch { }
             if (s.MonitorInterval < 15) s.MonitorInterval = 15;
@@ -191,7 +205,8 @@ namespace CodexNetFix
                 sb.AppendLine("  \"lastSeenVersion\": \"" + LastSeenVersion + "\",");
                 sb.AppendLine("  \"suppressTip\": " + (SuppressUpdateTip ? "true" : "false") + ",");
                 sb.AppendLine("  \"enableAnim\": " + (EnableAnim ? "true" : "false") + ",");
-                sb.AppendLine("  \"domesticDirect\": " + (DomesticDirect ? "true" : "false"));
+                sb.AppendLine("  \"domesticDirect\": " + (DomesticDirect ? "true" : "false") + ",");
+                sb.AppendLine("  \"proxyPath\": \"" + ProxyPath.Replace("\\", "\\\\") + "\"");
                 sb.AppendLine("}");
                 File.WriteAllText(FilePath(), sb.ToString(), new UTF8Encoding(false));
             }

@@ -665,6 +665,336 @@ namespace CodexNetFix
             }
             return n;
         }
+        // ================= 代理软件启动 =================
+        public class ProxyApp { public string Name = ""; public string Path = ""; }
+
+        static void AddApp(List<ProxyApp> list, string name, string path)
+        {
+            foreach (ProxyApp a in list) if (string.Equals(a.Path, path, StringComparison.OrdinalIgnoreCase)) return;
+            ProxyApp p = new ProxyApp(); p.Name = name; p.Path = path; list.Add(p);
+        }
+
+        public static List<ProxyApp> FindProxyApps()
+        {
+            List<ProxyApp> list = new List<ProxyApp>();
+            string[] keys = new string[] { "clash", "flclash", "verge", "v2ray", "nekoray", "sing-box", "singbox", "hiddify", "shadowsocks", "trojan", "hysteria", "ikuuu", "warp", "mihomo", "surge" };
+            // 1) 正在运行的进程
+            foreach (Process p in Process.GetProcesses())
+            {
+                try
+                {
+                    string n = p.ProcessName.ToLower();
+                    bool hit = false;
+                    foreach (string k in keys) if (n.IndexOf(k) >= 0) { hit = true; break; }
+                    if (!hit) continue;
+                    if (n.IndexOf("service") >= 0 || n.IndexOf("helper") >= 0) continue;
+                    string path = "";
+                    try { path = p.MainModule.FileName; } catch { }
+                    if (path.Length == 0) continue;
+                    AddApp(list, p.ProcessName, path);
+                }
+                catch { }
+            }
+            // 2) 常见安装目录（只进入名称匹配关键字的目录，避免全盘扫描）
+            string[] roots = new string[] {
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+            };
+            foreach (string root in roots)
+            {
+                if (string.IsNullOrEmpty(root) || !Directory.Exists(root)) continue;
+                try
+                {
+                    foreach (string dir in Directory.GetDirectories(root))
+                    {
+                        string dn = Path.GetFileName(dir).ToLower();
+                        bool hit = false;
+                        foreach (string k in keys) if (dn.IndexOf(k) >= 0) { hit = true; break; }
+                        if (!hit) continue;
+                        try
+                        {
+                            foreach (string f in Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories))
+                            {
+                                string fn = Path.GetFileName(f).ToLower();
+                                if (fn.IndexOf("uninstall") >= 0 || fn.IndexOf("service") >= 0 || fn.IndexOf("helper") >= 0 || fn.IndexOf("updater") >= 0) continue;
+                                AddApp(list, Path.GetFileNameWithoutExtension(f), f);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
+            return list;
+        }
+
+        public static string LaunchProxy(string path, List<string> log)
+        {
+            try
+            {
+                Process.Start(path);
+                if (log != null) log.Add("  ✓ 已启动: " + path);
+                return "OK";
+            }
+            catch (Exception ex)
+            {
+                if (log != null) log.Add("  ✗ 启动失败: " + ex.Message);
+                return "FAIL";
+            }
+        }
+
+        // 等待代理端口就绪（最多 timeoutSec 秒）
+        public static int WaitForProxy(int timeoutSec, List<string> log)
+        {
+            DateTime end = DateTime.Now.AddSeconds(timeoutSec);
+            int n = 0;
+            while (DateTime.Now < end)
+            {
+                int p = DetectProxyPort(null);
+                if (p > 0) { if (log != null) log.Add("  ✓ 代理已就绪，端口 " + p + "（等待 " + n + " 秒）"); return p; }
+                System.Threading.Thread.Sleep(1000);
+                n++;
+            }
+            if (log != null) log.Add("  ⚠ 等待 " + timeoutSec + " 秒仍未探测到代理端口（软件可能需要手动点“连接”）");
+            return 0;
+        }
+
+        // ================= 代理测速 =================
+        static long MeasureProxyConnect(int port, string host, int portNo)
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                using (TcpClient c = new TcpClient())
+                {
+                    IAsyncResult ar = c.BeginConnect("127.0.0.1", port, null, null);
+                    if (!ar.AsyncWaitHandle.WaitOne(3000)) return -1;
+                    c.EndConnect(ar);
+                    NetworkStream s = c.GetStream();
+                    string req = "CONNECT " + host + ":" + portNo + " HTTP/1.1\r\nHost: " + host + ":" + portNo + "\r\n\r\n";
+                    byte[] b = Encoding.ASCII.GetBytes(req);
+                    s.Write(b, 0, b.Length);
+                    s.ReadTimeout = 8000;
+                    byte[] buf = new byte[160];
+                    int n = s.Read(buf, 0, buf.Length);
+                    sw.Stop();
+                    string head = n > 0 ? Encoding.ASCII.GetString(buf, 0, n) : "";
+                    return head.IndexOf(" 2") > 0 ? sw.ElapsedMilliseconds : -1;
+                }
+            }
+            catch { return -1; }
+        }
+
+        public static string SpeedTest(int port, out long best)
+        {
+            best = -1;
+            StringBuilder sb = new StringBuilder();
+            string[] hosts = new string[] { "www.baidu.com", "github.com", "developers.openai.com" };
+            foreach (string h in hosts)
+            {
+                long ms = MeasureProxyConnect(port, h, 443);
+                if (ms >= 0)
+                {
+                    if (best < 0 || ms < best) best = ms;
+                    sb.AppendLine("  " + h.PadRight(26) + ms + " ms");
+                }
+                else sb.AppendLine("  " + h.PadRight(26) + "不通/超时");
+            }
+            return sb.ToString();
+        }
+
+        // ================= 端口占用 =================
+        public static string WhoOwnsPort(int port)
+        {
+            try
+            {
+                string outText = RunProcess("netstat", "-ano", 8000);
+                foreach (string raw in outText.Split('\n'))
+                {
+                    string line = raw.Trim();
+                    if (line.IndexOf("LISTENING", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    string[] parts = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 5) continue;
+                    if (!parts[1].EndsWith(":" + port)) continue;
+                    int pid;
+                    if (!int.TryParse(parts[parts.Length - 1], out pid)) continue;
+                    string name = "";
+                    try { name = Process.GetProcessById(pid).ProcessName; } catch { }
+                    return "端口 " + port + " 被占用：PID " + pid + " · " + name;
+                }
+                return "端口 " + port + " 当前没有程序监听";
+            }
+            catch (Exception ex) { return "查询失败: " + ex.Message; }
+        }
+
+        // ================= 时间同步检查（用 HTTP Date 头对比）=================
+        public static string CheckTimeSync(int port)
+        {
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://www.baidu.com/");
+                req.Method = "HEAD";
+                req.Proxy = new WebProxy("http://127.0.0.1:" + port, false);
+                req.Timeout = 8000;
+                req.ReadWriteTimeout = 8000;
+                req.AllowAutoRedirect = false;
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                {
+                    string date = resp.Headers["Date"];
+                    DateTime server;
+                    if (DateTime.TryParse(date, System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out server))
+                    {
+                        double diff = (DateTime.UtcNow - server).TotalSeconds;
+                        if (Math.Abs(diff) < 60) return "系统时间正确（偏差 " + Math.Round(diff) + " 秒）";
+                        return "! 系统时间偏差 " + Math.Round(diff) + " 秒，可能导致 TLS 失败，请同步系统时间";
+                    }
+                    if (!string.IsNullOrEmpty(date)) return "服务器时间格式无法识别: " + date;
+                }
+            }
+            catch { }
+            try
+            {
+                using (TcpClient c = new TcpClient())
+                {
+                    IAsyncResult ar = c.BeginConnect("127.0.0.1", port, null, null);
+                    if (!ar.AsyncWaitHandle.WaitOne(3000)) return "连接代理超时";
+                    c.EndConnect(ar);
+                    NetworkStream s = c.GetStream();
+                    string req = "HEAD http://www.baidu.com/ HTTP/1.1\r\nHost: www.baidu.com\r\nConnection: close\r\n\r\n";
+                    byte[] b = Encoding.ASCII.GetBytes(req);
+                    s.Write(b, 0, b.Length);
+                    s.ReadTimeout = 8000;
+                    byte[] buf = new byte[1024];
+                    int n = s.Read(buf, 0, buf.Length);
+                    string head = n > 0 ? Encoding.ASCII.GetString(buf, 0, n) : "";
+                    int i = head.IndexOf("Date:", StringComparison.OrdinalIgnoreCase);
+                    if (i < 0) return "未取到服务器时间";
+                    int e = head.IndexOf("\r\n", i);
+                    string ds = head.Substring(i + 5, e - i - 5).Trim();
+                    DateTime server;
+                    if (!DateTime.TryParse(ds, System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out server))
+                        return "服务器时间解析失败: " + ds;
+                    double diff = (DateTime.UtcNow - server).TotalSeconds;
+                    if (Math.Abs(diff) < 60) return "系统时间正确（偏差 " + Math.Round(diff) + " 秒）";
+                    return "⚠ 系统时间偏差 " + Math.Round(diff) + " 秒，可能导致 TLS 失败，请同步系统时间";
+                }
+            }
+            catch (Exception ex) { return "检查失败: " + ex.Message; }
+        }
+
+        // ================= 配置快照 / 反馈包 =================
+        public static string SnapshotsDir()
+        {
+            string d = Path.Combine(AppSettings_Dir(), "snapshots");
+            try { Directory.CreateDirectory(d); } catch { }
+            return d;
+        }
+
+        static string AppSettings_Dir()
+        {
+            string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CodexNetFix");
+            try { Directory.CreateDirectory(d); } catch { }
+            return d;
+        }
+
+        public static string CreateSnapshot(List<string> log)
+        {
+            try
+            {
+                string dir = SnapshotsDir();
+                string zip = Path.Combine(dir, "snapshot-" + Timestamp() + ".zip");
+                string home = CodexHome();
+                using (System.IO.Compression.ZipArchive za = System.IO.Compression.ZipFile.Open(zip, System.IO.Compression.ZipArchiveMode.Create))
+                {
+                    AddFileToZip(za, Path.Combine(home, "config.toml"), "config.toml");
+                    AddFileToZip(za, Path.Combine(home, ".env"), ".env");
+                    AddFileToZip(za, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gitconfig"), ".gitconfig");
+                }
+                if (log != null) log.Add("  ✓ 已创建配置快照: " + Path.GetFileName(zip));
+                return zip;
+            }
+            catch (Exception ex) { if (log != null) log.Add("  ✗ 创建快照失败: " + ex.Message); return ""; }
+        }
+
+        static void AddFileToZip(System.IO.Compression.ZipArchive za, string file, string entryName)
+        {
+            try
+            {
+                if (!File.Exists(file)) return;
+                System.IO.Compression.ZipArchiveEntry e = za.CreateEntry(entryName);
+                using (Stream s = e.Open()) using (FileStream fs = File.OpenRead(file)) fs.CopyTo(s);
+            }
+            catch { }
+        }
+
+        public static List<string> ListSnapshots()
+        {
+            List<string> list = new List<string>();
+            try
+            {
+                foreach (string f in Directory.GetFiles(SnapshotsDir(), "snapshot-*.zip")) list.Add(f);
+                list.Sort();
+                list.Reverse();
+            }
+            catch { }
+            return list;
+        }
+
+        public static bool RestoreSnapshot(string zip, List<string> log)
+        {
+            try
+            {
+                string home = CodexHome();
+                BackupFile(Path.Combine(home, "config.toml"), log);
+                BackupFile(Path.Combine(home, ".env"), log);
+                using (System.IO.Compression.ZipArchive za = System.IO.Compression.ZipFile.OpenRead(zip))
+                {
+                    foreach (System.IO.Compression.ZipArchiveEntry e in za.Entries)
+                    {
+                        string target;
+                        if (e.FullName == "config.toml") target = Path.Combine(home, "config.toml");
+                        else if (e.FullName == ".env") target = Path.Combine(home, ".env");
+                        else if (e.FullName == ".gitconfig") target = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gitconfig");
+                        else continue;
+                        using (Stream s = e.Open()) using (FileStream fs = File.Create(target)) s.CopyTo(fs);
+                        if (log != null) log.Add("  ✓ 已还原 " + e.FullName);
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex) { if (log != null) log.Add("  ✗ 还原快照失败: " + ex.Message); return false; }
+        }
+
+        // 打包反馈包（报告 + 历史 + 设置）到桌面
+        public static string MakeFeedbackPackage(int port, List<string> log)
+        {
+            try
+            {
+                string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                string zip = Path.Combine(desktop, "Codex反馈包-" + Timestamp() + ".zip");
+                List<CheckItem> items = SelfCheck(port, true, null);
+                string report = ReportText(port, items, log);
+                using (System.IO.Compression.ZipArchive za = System.IO.Compression.ZipFile.Open(zip, System.IO.Compression.ZipArchiveMode.Create))
+                {
+                    System.IO.Compression.ZipArchiveEntry e1 = za.CreateEntry("诊断报告.txt");
+                    using (Stream s = e1.Open()) using (StreamWriter w = new StreamWriter(s, new UTF8Encoding(false))) w.Write(report);
+                    string hist = Path.Combine(AppSettings_Dir(), "history.log");
+                    string cfgf = Path.Combine(AppSettings_Dir(), "settings.json");
+                    AddFileToZip(za, hist, "修复历史.log");
+                    AddFileToZip(za, cfgf, "设置.json");
+                    string readme = "Codex 网络修复工具 - 反馈包\r\n生成时间: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\r\n操作系统: " + Environment.OSVersion + "\r\n\r\n请把本压缩包发到技术反馈 QQ 群：783904560\r\n";
+                    System.IO.Compression.ZipArchiveEntry e4 = za.CreateEntry("如何反馈.txt");
+                    using (Stream s = e4.Open()) using (StreamWriter w = new StreamWriter(s, new UTF8Encoding(false))) w.Write(readme);
+                }
+                if (log != null) log.Add("  ✓ 反馈包已生成到桌面: " + Path.GetFileName(zip));
+                return zip;
+            }
+            catch (Exception ex) { if (log != null) log.Add("  ✗ 生成反馈包失败: " + ex.Message); return ""; }
+        }
         // 运行环境探针：检测是否在受限沙箱内运行（沙箱会隔离 CODEX_HOME 写权限与用户环境变量注册表）
         public static string ProbeEnvironment()
         {
