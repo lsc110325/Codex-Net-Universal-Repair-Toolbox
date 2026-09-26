@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace CodexNetFix
@@ -1516,6 +1517,49 @@ $out -join ""`n""
             sb.AppendLine(new string('-', 60));
             foreach (string l in log) sb.AppendLine(l);
             return sb.ToString();
+        }
+
+        public class TokenDay
+        {
+            public DateTime Date;
+            public long Tokens;
+        }
+
+        public static List<TokenDay> TokenUsageLast7Days()
+        {
+            DateTime today = DateTime.Today;
+            long[] totals = new long[7];
+            string root = Path.Combine(CodexHome(), "sessions");
+            if (Directory.Exists(root))
+            {
+                foreach (string file in Directory.GetFiles(root, "*.jsonl", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        int index = (int)(today - File.GetLastWriteTime(file).Date).TotalDays;
+                        if (index < 0 || index > 6) continue;
+                        long sessionTotal = 0;
+                        foreach (string line in File.ReadLines(file))
+                        {
+                            Match m = Regex.Match(line, "\"total_token_usage\"\\s*:\\s*\\{[^}]*\"total_tokens\"\\s*:\\s*(\\d+)");
+                            long value;
+                            if (m.Success && long.TryParse(m.Groups[1].Value, out value) && value > sessionTotal)
+                                sessionTotal = value;
+                        }
+                        totals[index] += sessionTotal;
+                    }
+                    catch { }
+                }
+            }
+            List<TokenDay> list = new List<TokenDay>();
+            for (int i = 6; i >= 0; i--)
+            {
+                TokenDay d = new TokenDay();
+                d.Date = today.AddDays(-i);
+                d.Tokens = totals[i];
+                list.Add(d);
+            }
+            return list;
         }
     }
 }

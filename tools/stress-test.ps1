@@ -69,7 +69,7 @@ function Restore-All {
 try {
     Sec "1. 基础功能"
     $v = Run $null @('--cli','version')
-    T "版本号输出" ($v -match 'VERSION=v1\.0\.350') ($v.Trim())
+    T "版本号输出" ($v -match 'VERSION=v1\.1\.100') ($v.Trim())
 
     $d = Run $null @('--cli','detect')
     $port = 0

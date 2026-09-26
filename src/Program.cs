@@ -42,12 +42,13 @@ namespace CodexNetFix
         RoundPanel cardSideStatus;
         Panel topBar, sidebar, contentHost, bodyPanel, bottomBar;
         RoundButton btnLaunchProxy, btnAllInOne, btnSpeed, btnPack, btnSnap, btnRestore, btnPortQ, btnTimeQ;
+        RoundButton btnTokenTools, btnDebugKey;
         List<string> runLog = new List<string>();
 
         public MainForm()
         {
             accent = AccentPreset.Get(cfg.AccentKey);
-            pal = Palette.Create(false, accent);   // 固定浅色（深色模式已移除）
+            pal = MakePalette(accent);
             FormBorderStyle = FormBorderStyle.None;
             Text = "Codex 网络修复工具";
             Size = new Size(1120, 780);
@@ -329,6 +330,30 @@ namespace CodexNetFix
             if (navRepair == null) return;
             Draw.Smooth(g);
             NavItem[] items = new NavItem[] { navRepair, navCheck, navMore, navAbout, navSettings };
+
+            if (accent.Pattern == "dots")
+            {
+                using (System.Drawing.Drawing2D.LinearGradientBrush lb = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    new Rectangle(0, 0, Math.Max(1, topBar.Width), topBar.Height),
+                    Color.FromArgb(86, 172, 242), Color.FromArgb(112, 222, 157), 0f))
+                    g.FillRectangle(lb, 0, 0, topBar.Width, topBar.Height);
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(180, 255, 255, 255)))
+                    for (int x = 20; x < topBar.Width; x += 58)
+                        g.FillEllipse(b, x, 12 + (x % 17) % 8, 4, 4);
+            }
+            else if (accent.Pattern == "pink")
+            {
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(72, 150, 45, 95)))
+                    for (int x = 18; x < topBar.Width; x += 46)
+                        g.FillEllipse(b, x, 11 + (x % 19) % 7, 8, 8);
+            }
+            else if (accent.Pattern == "stars")
+            {
+                g.Clear(Color.FromArgb(12, 16, 31));
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(220, 255, 255, 255)))
+                    for (int x = 12; x < topBar.Width; x += 37)
+                        g.FillEllipse(b, x, 8 + (x % 23) % 10, 2, 2);
+            }
 
             // 悬停项：浅色圆角矩形
             foreach (NavItem n in items)
@@ -641,12 +666,54 @@ namespace CodexNetFix
         {
             AccentPreset p = AccentPreset.Get(key);
             RoundButton b = new RoundButton();
-            b.Text = ""; b.Left = x; b.Top = y; b.Width = 42; b.Height = 42; b.Radius = 21;
+            b.Text = ""; b.Left = x; b.Top = y; b.Width = 34; b.Height = 34; b.Radius = 17;
             b.Tag = "swatch:" + key;
-            b.SwatchColor = p.Main;
-            b.SwatchSelected = (cfg.AccentKey == key);
             b.Click += delegate { SetAccent(key); };
+            ApplySwatchState(b, p);
             return b;
+        }
+
+        bool IsAccentUnlocked(AccentPreset p)
+        {
+            if (!p.Hidden) return true;
+            if (p.Key == "easterblue") return cfg.EasterBlueUnlocked;
+            if (p.Key == "infinitepink") return cfg.InfinitePinkUnlocked;
+            if (p.Key == "starry") return cfg.StarryUnlocked;
+            return false;
+        }
+
+        void ApplySwatchState(RoundButton b, AccentPreset p)
+        {
+            bool unlocked = IsAccentUnlocked(p);
+            if (unlocked)
+            {
+                b.CustomFill = Color.Empty;
+                b.SwatchColor = p.Main;
+                b.Text = "";
+                b.SwatchSelected = (cfg.AccentKey == p.Key);
+            }
+            else
+            {
+                b.SwatchColor = Color.Empty;
+                b.CustomFill = Color.FromArgb(226, 230, 237);
+                b.Text = "?";
+                b.TextOverride = Color.FromArgb(125, 132, 145);
+                b.SwatchSelected = false;
+            }
+            b.Invalidate();
+        }
+
+        void RefreshSwatches()
+        {
+            if (swatches == null) return;
+            foreach (RoundButton b in swatches)
+                if (b != null && b.Tag != null)
+                    ApplySwatchState(b, AccentPreset.Get(b.Tag.ToString().Replace("swatch:", "")));
+            if (lblAccentName != null)
+            {
+                AccentPreset p = AccentPreset.Get(cfg.AccentKey);
+                lblAccentName.Text = "当前：" + (p.Hidden && IsAccentUnlocked(p) ? p.UnlockedName : p.Name);
+            }
         }
 
         void BuildMorePage()
@@ -686,7 +753,12 @@ namespace CodexNetFix
             });
             openToolDir.Height = 42;
 
-            Label sec = MkLabel("快捷操作", 9.5f, FontStyle.Bold, 18, 342, "cardtitle");
+            btnTokenTools = MkAction("Token 优化", 18, 324, 216, delegate { DoTokenTools(); });
+            btnTokenTools.Height = 42; btnTokenTools.Primary = true;
+            btnDebugKey = MkAction("输入调试码", 252, 324, 216, delegate { DoDebugKey(); });
+            btnDebugKey.Height = 42;
+
+            Label sec = MkLabel("快捷操作", 9.5f, FontStyle.Bold, 18, 384, "cardtitle");
             string[] keys = new string[] {
                 "Ctrl+F  一键修复网络配置",
                 "Ctrl+T  打开并执行全面自检",
@@ -694,7 +766,7 @@ namespace CodexNetFix
                 "F5      重新探测本机代理端口",
                 "Ctrl+M  打开当前“更多”工具页"
             };
-            int ky = 374;
+            int ky = 416;
             foreach (string s in keys)
             {
                 Label l = MkLabel(s, 9f, FontStyle.Regular, 18, ky, "hint");
@@ -703,7 +775,7 @@ namespace CodexNetFix
                 ky += 28;
             }
 
-            Label foot = MkLabel("提示：所有修复操作都会先备份原文件；配置快照可随时恢复。", 8.5f, FontStyle.Regular, 18, 526, "hint");
+            Label foot = MkLabel("提示：所有修复操作都会先备份原文件；配置快照可随时恢复。", 8.5f, FontStyle.Regular, 18, 552, "hint");
             foot.AutoSize = false; foot.Width = 450; foot.Height = 38;
 
             cardTools.Controls.Add(btnLaunchProxy); cardTools.Controls.Add(btnAllInOne);
@@ -711,6 +783,7 @@ namespace CodexNetFix
             cardTools.Controls.Add(btnSnap); cardTools.Controls.Add(btnRestore);
             cardTools.Controls.Add(btnPortQ); cardTools.Controls.Add(btnTimeQ);
             cardTools.Controls.Add(openCodexDir); cardTools.Controls.Add(openToolDir);
+            cardTools.Controls.Add(btnTokenTools); cardTools.Controls.Add(btnDebugKey);
             cardTools.Controls.Add(sec); cardTools.Controls.Add(foot);
 
             RoundPanel cardHelp = MkCard("功能说明", 502, 0, 288, 598);
@@ -747,14 +820,14 @@ namespace CodexNetFix
         void BuildSettingsPage()
         {
             cardLook = MkCard("主题色", 0, 0, 386, 162);
-            string[] keys = new string[] { "blue", "purple", "yellow", "pink" };
-            swatches = new RoundButton[4];
-            for (int i = 0; i < 4; i++) swatches[i] = MkSwatch(keys[i], 22 + i * 54, 62);
-            lblAccentName = MkLabel("当前：" + accent.Name, 9f, FontStyle.Regular, 22, 118, "hint");
+            AccentPreset[] presets = AccentPreset.All();
+            swatches = new RoundButton[presets.Length];
+            for (int i = 0; i < presets.Length; i++) swatches[i] = MkSwatch(presets[i].Key, 22 + i * 44, 62);
+            lblAccentName = MkLabel("当前：" + (accent.Hidden ? accent.UnlockedName : accent.Name), 9f, FontStyle.Regular, 22, 118, "hint");
             cardLook.Controls.Add(lblAccentName);
             foreach (RoundButton b in swatches) cardLook.Controls.Add(b);
 
-            cardBehave = MkCard("行为", 0, 178, 386, 260);
+            cardBehave = MkCard("行为", 0, 178, 386, 268);
             swStartCheck = MkSwitch("启动时自动自检", 18, 56, cardBehave, 250);
             swMonitor = MkSwitch("后台监控代理健康", 18, 92, cardBehave, 250);
             swTray = MkSwitch("关闭窗口时最小化到托盘", 18, 128, cardBehave, 250);
@@ -768,8 +841,11 @@ namespace CodexNetFix
             btnIntervalPlus.Text = "+"; btnIntervalPlus.Left = 228; btnIntervalPlus.Top = 208; btnIntervalPlus.Width = 34; btnIntervalPlus.Height = 30;
             btnIntervalPlus.Click += delegate { cfg.MonitorInterval = Math.Min(1800, cfg.MonitorInterval + 15); RefreshInterval(); };
             cardBehave.Controls.Add(btnIntervalMinus); cardBehave.Controls.Add(lblIntervalValue); cardBehave.Controls.Add(btnIntervalPlus);
+            Label liquid = MkLabel("主题模式：液态玻璃（敬请期待）", 8.5f, FontStyle.Regular, 18, 246, "hint");
+            liquid.Enabled = false;
+            cardBehave.Controls.Add(liquid);
 
-            RoundPanel cardHotkeys = MkCard("快捷键", 0, 454, 386, 144);
+            RoundPanel cardHotkeys = MkCard("快捷键", 0, 462, 386, 136);
             swHotkeys = MkSwitch("启用快捷键", 18, 54, cardHotkeys, 110);
             swHotkeys.CheckedChanged += delegate
             {
@@ -1011,10 +1087,16 @@ namespace CodexNetFix
 
         void SetAccent(string key)
         {
-            accent = AccentPreset.Get(key);
+            AccentPreset wanted = AccentPreset.Get(key);
+            if (!IsAccentUnlocked(wanted))
+            {
+                TryUnlockAccent(wanted);
+                return;
+            }
+            accent = wanted;
             cfg.AccentKey = key;
-            pal = Palette.Create(false, accent);   // 固定浅色（深色模式已移除）
-            if (lblAccentName != null) lblAccentName.Text = "当前：" + accent.Name;
+            pal = MakePalette(accent);
+            if (lblAccentName != null) lblAccentName.Text = "当前：" + (accent.Hidden ? accent.UnlockedName : accent.Name);
             if (swatches != null)
                 foreach (RoundButton b in swatches)
                     if (b != null)
@@ -1025,6 +1107,79 @@ namespace CodexNetFix
                     }
             ApplyTheme();
             SaveSettings(false);
+        }
+
+        Palette MakePalette(AccentPreset p)
+        {
+            return Palette.Create(p.Key == "starry", p);
+        }
+
+        void TryUnlockAccent(AccentPreset p)
+        {
+            if (p.Key == "infinitepink")
+            {
+                MessageBox.Show("100！！！\n\n当前修复次数：" + cfg.RepairCount + "/100\n达成后自动解锁无限粉。",
+                    "彩蛋提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            string key = "";
+            bool showHelp = p.Key == "easterblue";
+            using (EasterKeyDialog dlg = new EasterKeyDialog(pal, showHelp ? "彩蛋蓝需要密钥" : "输入密钥", showHelp))
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                key = dlg.KeyText.Trim();
+            }
+            if (p.Key == "easterblue" && key == "CODEX-BLUE-9F3A-27K") cfg.EasterBlueUnlocked = true;
+            else if (p.Key == "starry" && key == "CODEX-STAR-7QK-2026") cfg.StarryUnlocked = true;
+            else { MessageBox.Show("密钥不正确。", "彩蛋", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            cfg.Save();
+            RefreshSwatches();
+            SetStatus("彩蛋颜色已解锁", pal.Ok);
+            History.Add("彩蛋解锁", "成功", p.UnlockedName);
+        }
+
+        void DoDebugKey()
+        {
+            if (cfg.DebugKeyUsed)
+            {
+                MessageBox.Show("调试码已经使用过了。", "调试码", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            using (EasterKeyDialog dlg = new EasterKeyDialog(pal, "输入调试码", false))
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                if (dlg.KeyText.Trim() != "CODEX-DEBUG-ONCE-2026")
+                {
+                    MessageBox.Show("调试码不正确。", "调试码", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            cfg.DebugKeyUsed = true;
+            cfg.EasterBlueUnlocked = true;
+            cfg.InfinitePinkUnlocked = true;
+            cfg.StarryUnlocked = true;
+            cfg.Save();
+            RefreshSwatches();
+            SetStatus("调试码已使用，三个彩蛋颜色已解锁", pal.Ok);
+            History.Add("调试码", "已使用", "解锁全部彩蛋颜色");
+        }
+
+        void DoTokenTools()
+        {
+            using (TokenToolsDialog dlg = new TokenToolsDialog(pal, SelectedPort()))
+                dlg.ShowDialog(this);
+        }
+
+        void RecordRepair()
+        {
+            cfg.RepairCount++;
+            if (cfg.RepairCount >= 100 && !cfg.InfinitePinkUnlocked)
+            {
+                cfg.InfinitePinkUnlocked = true;
+                SetStatus("已达成 100 次修复，无限粉彩蛋解锁！", pal.Ok);
+            }
+            cfg.Save();
+            RefreshSwatches();
         }
 
         void TryEnableGlass()
@@ -1041,7 +1196,7 @@ namespace CodexNetFix
         void ApplyThemeMode(bool dark)
         {
             cfg.ThemeMode = "light";
-            pal = Palette.Create(dark, accent);
+            pal = MakePalette(accent);
             if (topBar != null) topBar.BackColor = dark ? Color.FromArgb(30, 34, 42) : pal.Accent;
             ApplyTheme();
             StyleNav();
@@ -1271,7 +1426,7 @@ namespace CodexNetFix
                     btnFix.Enabled = true;
                     if (used > 0)
                     {
-                        txtPort.Text = used.ToString(); cfg.LastPort = used; cfg.Save();
+                        txtPort.Text = used.ToString(); cfg.LastPort = used; RecordRepair();
                         SetStatus("修复完成（端口 " + used + "）。建议点【重启 Codex】后再【全面自检】。", pal.Ok);
                         UpdateSide("已修复", "端口 " + used + " · 已写入配置", "OK");
                         History.Add("一键修复", "成功", "端口 " + used);
@@ -1547,7 +1702,7 @@ namespace CodexNetFix
                     if (btnAllInOne != null) btnAllInOne.Enabled = true;
                     if (used > 0)
                     {
-                        txtPort.Text = used.ToString(); cfg.LastPort = used; cfg.Save();
+                        txtPort.Text = used.ToString(); cfg.LastPort = used; RecordRepair();
                         if (items != null)
                         {
                             RenderChecks(items);
@@ -1934,6 +2089,254 @@ namespace CodexNetFix
         }
     }
     // 多个代理软件时的选择对话框
+    public class TokenStatsChart : Control
+    {
+        public List<Core.TokenDay> Data = new List<Core.TokenDay>();
+        public Palette Theme;
+        public TokenStatsChart()
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Draw.Smooth(e.Graphics);
+            e.Graphics.Clear(Theme != null ? Theme.Card : Color.White);
+            if (Data == null || Data.Count == 0) return;
+            long max = 1;
+            foreach (Core.TokenDay d in Data) if (d.Tokens > max) max = d.Tokens;
+            int left = 34, top = 18, bottom = Height - 30, gap = 10;
+            int barW = Math.Max(16, (Width - left - 20 - gap * (Data.Count - 1)) / Data.Count);
+            using (Font f = Draw.Ui(8.5f, FontStyle.Regular))
+            {
+                for (int i = 0; i < Data.Count; i++)
+                {
+                    int h = (int)((bottom - top) * (Data[i].Tokens / (double)max));
+                    int x = left + i * (barW + gap);
+                    Rectangle r = new Rectangle(x, bottom - h, barW, Math.Max(3, h));
+                    using (System.Drawing.Drawing2D.GraphicsPath p = Draw.Rounded(r, 8))
+                    using (SolidBrush b = new SolidBrush(Theme != null ? Theme.Accent : Color.FromArgb(96,160,248)))
+                        e.Graphics.FillPath(b, p);
+                    TextRenderer.DrawText(e.Graphics, Data[i].Date.ToString("MM/dd"), f,
+                        new Rectangle(x - 8, bottom + 6, barW + 16, 20), Theme != null ? Theme.TextSub : Color.Gray,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                }
+            }
+            using (Pen p = new Pen(Theme != null ? Theme.Edge : Color.LightGray))
+                e.Graphics.DrawLine(p, left, bottom, Width - 20, bottom);
+        }
+    }
+
+    public class TokenToolsDialog : Form
+    {
+        Palette pal;
+        int port;
+        Label status;
+        System.Windows.Forms.Timer monitor;
+        bool monitoring = false;
+        public TokenToolsDialog(Palette theme, int proxyPort)
+        {
+            pal = theme; port = proxyPort;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterParent;
+            ClientSize = new Size(620, 500);
+            Text = "Token 优化与代理监测";
+            BackColor = pal.ContentBg;
+            Font = Draw.Ui(9.5f, FontStyle.Regular);
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Panel head = new Panel();
+            head.Left = 0; head.Top = 0; head.Width = ClientSize.Width; head.Height = 48; head.BackColor = pal.Accent;
+            Label title = new Label();
+            title.Text = "Token 优化与代理监测";
+            title.Font = Draw.Ui(12f, FontStyle.Bold); title.ForeColor = Color.White; title.BackColor = Color.Transparent;
+            title.AutoSize = true; title.Left = 20; title.Top = 13;
+            RoundButton close = new RoundButton();
+            close.Text = "×"; close.Primary = true; close.Theme = pal; close.TextOverride = Color.White;
+            close.Left = ClientSize.Width - 48; close.Top = 9; close.Width = 34; close.Height = 30;
+            close.Click += delegate { Close(); };
+            head.Controls.Add(title); head.Controls.Add(close);
+            AttachDrag(head); AttachDrag(title);
+            Controls.Add(head);
+
+            List<Core.TokenDay> usage = Core.TokenUsageLast7Days();
+            long today = usage.Count > 0 ? usage[usage.Count - 1].Tokens : 0;
+            long week = 0; foreach (Core.TokenDay d in usage) week += d.Tokens;
+            Label sum = new Label();
+            sum.Text = "今日 Token 消耗：" + today.ToString("N0") + "    近 7 日累计：" + week.ToString("N0");
+            sum.Font = Draw.Ui(10f, FontStyle.Bold); sum.ForeColor = pal.Text;
+            sum.AutoSize = false; sum.Left = 22; sum.Top = 64; sum.Width = 576; sum.Height = 24;
+            Controls.Add(sum);
+
+            TokenStatsChart chart = new TokenStatsChart();
+            chart.Theme = pal; chart.Data = usage; chart.Left = 22; chart.Top = 100; chart.Width = 576; chart.Height = 150;
+            Controls.Add(chart);
+
+            RoundButton ponytail = new RoundButton();
+            ponytail.Text = "安装 / 更新 Ponytail"; ponytail.Primary = true; ponytail.Theme = pal;
+            ponytail.Left = 22; ponytail.Top = 270; ponytail.Width = 180; ponytail.Height = 36;
+            ponytail.Click += delegate { InstallPonytail(); };
+            RoundButton guide = new RoundButton();
+            guide.Text = "复制省 Token 提示词"; guide.Theme = pal;
+            guide.Left = 216; guide.Top = 270; guide.Width = 180; guide.Height = 36;
+            guide.Click += delegate { CopyTokenGuide(); };
+            RoundButton speed = new RoundButton();
+            speed.Text = "立即测速"; speed.Theme = pal;
+            speed.Left = 410; speed.Top = 270; speed.Width = 188; speed.Height = 36;
+            speed.Click += delegate { RunSpeed(); };
+            Controls.Add(ponytail); Controls.Add(guide); Controls.Add(speed);
+
+            RoundButton monitorBtn = new RoundButton();
+            monitorBtn.Text = "开始网络监测"; monitorBtn.Theme = pal;
+            monitorBtn.Left = 22; monitorBtn.Top = 318; monitorBtn.Width = 180; monitorBtn.Height = 36;
+            status = new Label();
+            status.Text = "监测未启动"; status.ForeColor = pal.TextSub;
+            status.AutoSize = false; status.Left = 216; status.Top = 326; status.Width = 382; status.Height = 24;
+            monitor = new System.Windows.Forms.Timer(); monitor.Interval = 5000;
+            monitor.Tick += delegate { ProbeAsync(); };
+            monitorBtn.Click += delegate
+            {
+                monitoring = !monitoring;
+                monitorBtn.Text = monitoring ? "停止网络监测" : "开始网络监测";
+                if (monitoring) { monitor.Start(); ProbeAsync(); } else { monitor.Stop(); status.Text = "监测已停止"; }
+            };
+            Controls.Add(monitorBtn); Controls.Add(status);
+
+            Label note = new Label();
+            note.Text = "Token 统计来自本机 Codex sessions 日志，按会话文件日期估算；若某会话跨天，会归入最后写入日期。";
+            note.ForeColor = pal.TextFaint; note.AutoSize = false; note.Left = 22; note.Top = 380; note.Width = 576; note.Height = 44;
+            Controls.Add(note);
+            FormClosing += delegate { if (monitor != null) monitor.Stop(); };
+            Shown += delegate { using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width, Height), 16)) Region = new Region(gp); };
+        }
+
+        void InstallPonytail()
+        {
+            status.Text = "正在安装 / 更新 Ponytail...";
+            Thread t = new Thread(delegate ()
+            {
+                string cli = Core.FindCodexExe();
+                if (cli.Length == 0) cli = "codex";
+                Core.RunProcess(cli, "plugin marketplace add DietrichGebert/ponytail", 180000);
+                Core.RunProcess(cli, "plugin add ponytail@ponytail", 180000);
+                Core.RunProcess(cli, "plugin marketplace upgrade", 180000);
+                Core.RunProcess(cli, "plugin add ponytail@ponytail", 180000);
+                BeginInvoke(new Action(delegate { status.Text = "Ponytail 安装/更新命令已执行，请重启 Codex 并信任 hooks。"; }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void CopyTokenGuide()
+        {
+            string text = "先找现成方案，再写代码，尽量少消耗 Token：\n"
+                + "1. 先在 GitHub 搜索同类项目、组件、脚本或开源实现。\n"
+                + "2. 建模任务先查 Poly Haven、Sketchfab、Blend Swap、Free3D、NASA 3D 等开放资源。\n"
+                + "3. 先复用现有代码、标准库、原生功能和已安装依赖，避免从零生成。\n"
+                + "4. 需求先写成明确目标、输入、输出和验收标准，减少来回确认。\n"
+                + "5. 大任务拆分，只让 AI 读取相关文件和必要上下文。\n"
+                + "6. 复杂改动先让 AI 给简短方案，确认后再实现。\n";
+            try { Clipboard.SetText(text); MessageBox.Show("省 Token 提示词已复制到剪贴板。", "Token 优化", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+            catch { MessageBox.Show("复制失败，请检查剪贴板权限。", "Token 优化", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        }
+
+        void ProbeAsync()
+        {
+            int p = port > 0 ? port : Core.DetectProxyPort(null);
+            if (p <= 0) { status.Text = "未找到代理端口"; return; }
+            status.Text = "正在监测 127.0.0.1:" + p + "...";
+            Thread t = new Thread(delegate ()
+            {
+                string detail;
+                bool ok = Core.QuickProbe(p, out detail);
+                BeginInvoke(new Action(delegate { status.Text = ok ? "代理在线：" + detail : "代理异常：" + detail; }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void RunSpeed()
+        {
+            status.Text = "正在测试代理延迟...";
+            Thread t = new Thread(delegate ()
+            {
+                int p = port > 0 ? port : Core.DetectProxyPort(null);
+                if (p <= 0) { BeginInvoke(new Action(delegate { status.Text = "未找到代理端口"; })); return; }
+                long best = -1;
+                string detail = Core.SpeedTest(p, out best);
+                BeginInvoke(new Action(delegate
+                {
+                    status.Text = best >= 0 ? "最佳延迟 " + best + " ms" : "测速失败";
+                    MessageBox.Show(detail, "代理测速", MessageBoxButtons.OK, best >= 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+        void AttachDrag(Control c)
+        {
+            c.MouseDown += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Left) return;
+                try { ReleaseCapture(); SendMessage(Handle, 0xA1, 0x2, 0); } catch { }
+            };
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Draw.Smooth(e.Graphics);
+            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width - 1, Height - 1), 16))
+            using (Pen p = new Pen(Color.FromArgb(40, 0, 0, 0)))
+                e.Graphics.DrawPath(p, gp);
+        }
+    }
+
+    public class EasterKeyDialog : Form
+    {
+        public string KeyText = "";
+        public EasterKeyDialog(Palette pal, string title, bool showHelp)
+        {
+            Text = title;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            StartPosition = FormStartPosition.CenterParent;
+            MaximizeBox = false; MinimizeBox = false;
+            ClientSize = new Size(430, showHelp ? 210 : 170);
+            BackColor = pal.Card;
+            Font = Draw.Ui(9.5f, FontStyle.Regular);
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Label tip = new Label();
+            tip.Text = showHelp ? "请输入密钥。密钥可到爱发电私信彩蛋获取。" : "请输入密钥。";
+            tip.AutoSize = true; tip.Left = 18; tip.Top = 18; tip.ForeColor = pal.TextSub;
+            TextBox input = new TextBox();
+            input.Left = 18; input.Top = 46; input.Width = 394; input.Height = 28;
+            input.Font = new Font("Consolas", 11f); input.UseSystemPasswordChar = false;
+            Controls.Add(tip); Controls.Add(input);
+
+            if (showHelp)
+            {
+                Button link = new Button();
+                link.Text = "打开爱发电彩蛋页面";
+                link.Left = 18; link.Top = 84; link.Width = 170; link.Height = 28;
+                link.Click += delegate { try { Process.Start("https://afdian.com/album/34b59c18b91411f1ba475254001e7c00"); } catch { } };
+                Controls.Add(link);
+            }
+
+            RoundButton ok = new RoundButton();
+            ok.Text = "解锁"; ok.Primary = true; ok.Theme = pal;
+            ok.Left = 220; ok.Top = showHelp ? 132 : 94; ok.Width = 92; ok.Height = 34;
+            ok.Click += delegate { KeyText = input.Text; DialogResult = DialogResult.OK; Close(); };
+            RoundButton cancel = new RoundButton();
+            cancel.Text = "取消"; cancel.Theme = pal;
+            cancel.Left = 320; cancel.Top = showHelp ? 132 : 94; cancel.Width = 92; cancel.Height = 34;
+            cancel.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
+            Controls.Add(ok); Controls.Add(cancel);
+            AcceptButton = ok; CancelButton = cancel;
+        }
+    }
+
     public class HotkeySettingsDialog : Form
     {
         Palette pal;
@@ -2189,7 +2592,11 @@ namespace CodexNetFix
                 try { IntPtr h = GetConsoleWindow(); if (h != IntPtr.Zero) ShowWindow(h, 0); } catch { }
             }
             if (cli) { Cli(args); return; }
-            Application.EnableVisualStyles();
+            bool createdNew;
+            using (Mutex single = new Mutex(true, "CodexNetFix-SingleInstance", out createdNew))
+            {
+                if (!createdNew) return;
+                Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += delegate(object s, ThreadExceptionEventArgs e) { LogError(e.Exception); };
@@ -2198,11 +2605,12 @@ namespace CodexNetFix
             {
                 Application.Run(new MainForm());
             }
-            catch (Exception ex)
-            {
-                LogError(ex);
-                MessageBox.Show("程序启动失败，详情已写入:\r\n" + Path.Combine(AppSettings.Dir(), "error.log") + "\r\n\r\n" + ex.Message,
-                    "Codex 网络修复工具", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                catch (Exception ex)
+                {
+                    LogError(ex);
+                    MessageBox.Show("程序启动失败，详情已写入:\r\n" + Path.Combine(AppSettings.Dir(), "error.log") + "\r\n\r\n" + ex.Message,
+                        "Codex 网络修复工具", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

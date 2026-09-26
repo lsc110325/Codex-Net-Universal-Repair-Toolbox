@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.350";
-        public const string Current = "v1.0.350";
-        public const string Last = "v1.0.325";
+        public const string Num = "1.1.100";
+        public const string Current = "v1.1.100";
+        public const string Last = "v1.0.350";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.0.325";
+        public const string Previous = "v1.0.350";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,11 +36,13 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
-                "更新提示弹窗缩小为轻量卡片，只显示当前版本变更",
-                "更新日志页拆分为正式版和测试版两个独立区域",
-                "正式版 / 测试版版本列表支持独立滚动",
-                "重新整理 200 以前测试版日志显示",
-                "版本更新为 v1.0.350"
+                "新增 Token 优化面板：Ponytail 安装/更新、省 Token 提示词、代理监测",
+                "新增今日 Token 消耗和近 7 日消耗柱状图",
+                "新增淡绿色主题，以及彩蛋蓝、无限粉、星空黑三种隐藏主题",
+                "新增调试码：仅能使用一次，解锁全部彩蛋颜色",
+                "新增液态玻璃主题模式占位，暂不开放",
+                "加入单实例锁，重复打开只保留一个窗口",
+                "版本更新为 v1.1.100"
             };
         }
 
@@ -48,9 +50,18 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "新增 Token 优化：Ponytail 安装/更新、省 Token 提示词和代理监测",
+                    "新增今日 Token 统计与近 7 日消耗柱状图",
+                    "新增淡绿色主题和三种隐藏彩蛋主题：彩蛋蓝、无限粉、星空黑",
+                    "新增一次性调试码，可解锁全部彩蛋颜色",
+                    "新增液态玻璃模式占位（敬请期待）",
+                    "修复重复打开工具出现多个窗口",
+                    "版本更新为 v1.1.100"
+                },
                 new string[] {
                     "尝试开发项目官网：功能介绍、开发建议投稿、GitHub 与下载入口",
                     "由于开发和维护成本过高，官网方案停止，作为弃案保留",
@@ -256,6 +267,11 @@ namespace CodexNetFix
         public bool EnableAnim = true;   // 界面动画（滑块/胶囊滑动/悬停过渡）
         public bool DomesticDirect = false;   // 国内网络直连（国内站点不走代理）
         public string ProxyPath = "";        // 代理软件可执行文件路径（记住用户选择）
+        public bool EasterBlueUnlocked = false;
+        public bool InfinitePinkUnlocked = false;
+        public bool StarryUnlocked = false;
+        public bool DebugKeyUsed = false;
+        public int RepairCount = 0;
 
         public static string Dir()
         {
@@ -290,6 +306,11 @@ namespace CodexNetFix
                 s.EnableAnim = GetBool(t, "enableAnim", s.EnableAnim);
                 s.DomesticDirect = GetBool(t, "domesticDirect", s.DomesticDirect);
                 s.ProxyPath = GetStr(t, "proxyPath", s.ProxyPath);
+                s.EasterBlueUnlocked = GetBool(t, "easterBlue", s.EasterBlueUnlocked);
+                s.InfinitePinkUnlocked = GetBool(t, "infinitePink", s.InfinitePinkUnlocked);
+                s.StarryUnlocked = GetBool(t, "starry", s.StarryUnlocked);
+                s.DebugKeyUsed = GetBool(t, "debugKeyUsed", s.DebugKeyUsed);
+                s.RepairCount = GetInt(t, "repairCount", s.RepairCount);
                 s.HotkeysEnabled = GetBool(t, "hotkeysEnabled", s.HotkeysEnabled);
                 s.HotkeyRepair = GetStr(t, "hotkeyRepair", s.HotkeyRepair);
                 s.HotkeyCheck = GetStr(t, "hotkeyCheck", s.HotkeyCheck);
@@ -304,6 +325,9 @@ namespace CodexNetFix
             }
             catch { }
             if (s.MonitorInterval < 15) s.MonitorInterval = 15;
+            if (s.AccentKey == "easterblue" && !s.EasterBlueUnlocked) s.AccentKey = "blue";
+            if (s.AccentKey == "infinitepink" && !s.InfinitePinkUnlocked) s.AccentKey = "blue";
+            if (s.AccentKey == "starry" && !s.StarryUnlocked) s.AccentKey = "blue";
             return s;
         }
 
@@ -329,6 +353,11 @@ namespace CodexNetFix
                 sb.AppendLine("  \"enableAnim\": " + (EnableAnim ? "true" : "false") + ",");
                 sb.AppendLine("  \"domesticDirect\": " + (DomesticDirect ? "true" : "false") + ",");
                 sb.AppendLine("  \"proxyPath\": \"" + ProxyPath.Replace("\\", "\\\\") + "\",");
+                sb.AppendLine("  \"easterBlue\": " + (EasterBlueUnlocked ? "true" : "false") + ",");
+                sb.AppendLine("  \"infinitePink\": " + (InfinitePinkUnlocked ? "true" : "false") + ",");
+                sb.AppendLine("  \"starry\": " + (StarryUnlocked ? "true" : "false") + ",");
+                sb.AppendLine("  \"debugKeyUsed\": " + (DebugKeyUsed ? "true" : "false") + ",");
+                sb.AppendLine("  \"repairCount\": " + RepairCount + ",");
                 sb.AppendLine("  \"hotkeysEnabled\": " + (HotkeysEnabled ? "true" : "false") + ",");
                 sb.AppendLine("  \"hotkeyRepair\": \"" + HotkeyRepair + "\",");
                 sb.AppendLine("  \"hotkeyCheck\": \"" + HotkeyCheck + "\",");

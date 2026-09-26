@@ -7,22 +7,29 @@ using System.Windows.Forms;
 
 namespace CodexNetFix
 {
-    // 辅助色预设（淡蓝 / 淡紫 / 淡黄 / 淡粉）
+    // 辅助色与彩蛋色预设
     public class AccentPreset
     {
         public string Key = "blue";
         public string Name = "淡蓝";
+        public string UnlockedName = "";
+        public bool Hidden = false;
+        public string Pattern = "";
         public Color Main = Color.FromArgb(111, 168, 245);
         public Color Soft = Color.FromArgb(233, 242, 255);
         public Color Text = Color.White;
 
         public static AccentPreset[] All()
         {
-            AccentPreset[] a = new AccentPreset[4];
+            AccentPreset[] a = new AccentPreset[8];
             a[0] = new AccentPreset(); a[0].Key = "blue"; a[0].Name = "淡蓝"; a[0].Main = Color.FromArgb(96, 160, 248); a[0].Soft = Color.FromArgb(232, 242, 255); a[0].Text = Color.White;
             a[1] = new AccentPreset(); a[1].Key = "purple"; a[1].Name = "淡紫"; a[1].Main = Color.FromArgb(160, 128, 238); a[1].Soft = Color.FromArgb(240, 234, 254); a[1].Text = Color.White;
             a[2] = new AccentPreset(); a[2].Key = "yellow"; a[2].Name = "淡黄"; a[2].Main = Color.FromArgb(242, 198, 84); a[2].Soft = Color.FromArgb(255, 247, 226); a[2].Text = Color.FromArgb(74, 55, 8);
             a[3] = new AccentPreset(); a[3].Key = "pink"; a[3].Name = "淡粉"; a[3].Main = Color.FromArgb(244, 138, 176); a[3].Soft = Color.FromArgb(255, 236, 244); a[3].Text = Color.White;
+            a[4] = new AccentPreset(); a[4].Key = "green"; a[4].Name = "淡绿"; a[4].Main = Color.FromArgb(105, 205, 145); a[4].Soft = Color.FromArgb(232, 249, 239); a[4].Text = Color.White;
+            a[5] = new AccentPreset(); a[5].Key = "easterblue"; a[5].Name = "???"; a[5].UnlockedName = "彩蛋蓝"; a[5].Hidden = true; a[5].Pattern = "dots"; a[5].Main = Color.FromArgb(89, 178, 240); a[5].Soft = Color.FromArgb(231, 246, 255); a[5].Text = Color.White;
+            a[6] = new AccentPreset(); a[6].Key = "infinitepink"; a[6].Name = "???"; a[6].UnlockedName = "无限粉"; a[6].Hidden = true; a[6].Pattern = "pink"; a[6].Main = Color.FromArgb(242, 115, 170); a[6].Soft = Color.FromArgb(255, 232, 242); a[6].Text = Color.White;
+            a[7] = new AccentPreset(); a[7].Key = "starry"; a[7].Name = "???"; a[7].UnlockedName = "星空黑"; a[7].Hidden = true; a[7].Pattern = "stars"; a[7].Main = Color.FromArgb(16, 21, 40); a[7].Soft = Color.FromArgb(35, 43, 68); a[7].Text = Color.White;
             return a;
         }
 
