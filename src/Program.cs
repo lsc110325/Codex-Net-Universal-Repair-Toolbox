@@ -421,11 +421,10 @@ namespace CodexNetFix
         RoundButton WinBtn(string glyph, EventHandler h)
         {
             RoundButton b = new RoundButton();
-            b.Text = glyph; b.Width = 32; b.Height = 32; b.Top = 10; b.Radius = 16;
+            b.Text = glyph; b.Width = 36; b.Height = 30; b.Top = 12; b.Radius = 15;
             b.Font = Draw.Ui(9f, FontStyle.Regular);
             // 纯图标按钮：默认无背景，悬停时半透明高亮
             b.Ghost = true;
-            b.TransparentPaint = true;
             b.CustomFill = Color.Empty;
             b.TextOverride = Color.White;
             b.HoverFillColor = Color.White;
@@ -921,6 +920,7 @@ namespace CodexNetFix
             btnIntervalPlus.Click += delegate { cfg.MonitorInterval = Math.Min(1800, cfg.MonitorInterval + 15); RefreshInterval(); };
             cardBehave.Controls.Add(btnIntervalMinus); cardBehave.Controls.Add(lblIntervalValue); cardBehave.Controls.Add(btnIntervalPlus);
             Label liquid = MkLabel("主题模式：液态玻璃（敬请期待）", 8.5f, FontStyle.Regular, 18, 246, "hint");
+            liquid.Enabled = false;
             cardBehave.Controls.Add(liquid);
 
             RoundPanel cardHotkeys = MkCard("快捷键", 0, 462, 386, 136);
@@ -1461,13 +1461,8 @@ namespace CodexNetFix
                     else if (tag == "winbtn" || tag == "winclose")
                     {
                         rb.Ghost = false;
-                        rb.NoPaint = false;
-                        rb.TransparentPaint = true;
-                        rb.CustomFill = Color.FromArgb(44, 255, 255, 255);
-                        rb.TextOverride = Color.White;
-                        rb.HoverFillColor = rb.Tag != null && rb.Tag.ToString() == "winclose"
-                            ? Color.FromArgb(255, 232, 82, 82) : Color.White;
-                        rb.HoverAlpha = rb.Tag != null && rb.Tag.ToString() == "winclose" ? 90 : 50;
+                        rb.CustomFill = Color.White;
+                        rb.TextOverride = pal.Accent;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
                         else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }
@@ -2339,7 +2334,6 @@ namespace CodexNetFix
             author.ForeColor = pal.Text;
             Label note = MakeLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 24, 102, "opt");
             note.AutoSize = false; note.Width = 570; note.Height = 105;
-            note.ForeColor = pal.Text;
             RoundButton sponsor = new RoundButton();
             sponsor.Text = "赞助大大"; sponsor.Primary = true; sponsor.Theme = pal;
             sponsor.Left = 24; sponsor.Top = 220; sponsor.Width = 180; sponsor.Height = 38;

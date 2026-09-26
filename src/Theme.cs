@@ -29,7 +29,7 @@ namespace CodexNetFix
             a[4] = new AccentPreset(); a[4].Key = "green"; a[4].Name = "淡绿"; a[4].Main = Color.FromArgb(105, 205, 145); a[4].Soft = Color.FromArgb(232, 249, 239); a[4].Text = Color.White;
             a[5] = new AccentPreset(); a[5].Key = "easterblue"; a[5].Name = "???"; a[5].UnlockedName = "彩蛋蓝"; a[5].Hidden = true; a[5].Pattern = "dots"; a[5].Main = Color.FromArgb(89, 178, 240); a[5].Soft = Color.FromArgb(231, 246, 255); a[5].Text = Color.White;
             a[6] = new AccentPreset(); a[6].Key = "infinitepink"; a[6].Name = "???"; a[6].UnlockedName = "无限粉"; a[6].Hidden = true; a[6].Pattern = "pink"; a[6].Main = Color.FromArgb(242, 115, 170); a[6].Soft = Color.FromArgb(255, 232, 242); a[6].Text = Color.White;
-            a[7] = new AccentPreset(); a[7].Key = "starry"; a[7].Name = "???"; a[7].UnlockedName = "星空黑"; a[7].Hidden = true; a[7].Pattern = "stars"; a[7].Main = Color.FromArgb(126, 151, 220); a[7].Soft = Color.FromArgb(35, 43, 68); a[7].Text = Color.White;
+            a[7] = new AccentPreset(); a[7].Key = "starry"; a[7].Name = "???"; a[7].UnlockedName = "星空黑"; a[7].Hidden = true; a[7].Pattern = "stars"; a[7].Main = Color.FromArgb(16, 21, 40); a[7].Soft = Color.FromArgb(35, 43, 68); a[7].Text = Color.White;
             return a;
         }
 
@@ -376,12 +376,6 @@ namespace CodexNetFix
             {
                 Draw.Smooth(pevent.Graphics);
                 Rectangle rr0 = new Rectangle(0, 0, Width - 1, Height - 1);
-                if (hover && HoverFillColor != Color.Empty)
-                {
-                    using (GraphicsPath hp = Draw.Rounded(rr0, Radius))
-                    using (SolidBrush hb = new SolidBrush(Color.FromArgb(HoverAlpha, HoverFillColor)))
-                        pevent.Graphics.FillPath(hb, hp);
-                }
                 Color tc0 = TextOverride != Color.Empty ? TextOverride : ForeColor;
                 TextRenderer.DrawText(pevent.Graphics, Text, Font, rr0, tc0, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
                 return;
@@ -395,17 +389,8 @@ namespace CodexNetFix
             {
                 Rectangle cr = new Rectangle(0, 0, Width - 1, Height - 1);
                 using (GraphicsPath cp2 = Draw.Rounded(cr, Radius))
-                {
-                    Color cf = CustomFill;
-                    if (hover)
-                    {
-                        if (HoverFillColor != Color.Empty)
-                            cf = HoverAlpha > 0 ? Color.FromArgb(HoverAlpha, HoverFillColor) : HoverFillColor;
-                        else cf = Blend(CustomFill, Color.Black, 0.12);
-                    }
-                    using (SolidBrush cb2 = new SolidBrush(cf))
-                        g.FillPath(cb2, cp2);
-                }
+                using (SolidBrush cb2 = new SolidBrush(hover ? Blend(CustomFill, Color.Black, 0.12) : CustomFill))
+                    g.FillPath(cb2, cp2);
                 Color ct = TextOverride != Color.Empty ? TextOverride : Color.White;
                 TextRenderer.DrawText(g, Text, Font, cr, ct, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
                 return;
@@ -494,7 +479,7 @@ namespace CodexNetFix
             int kx = track.X + 2 + (int)Math.Round((track.Right - kd - 2 - (track.X + 2)) * sp);
             using (SolidBrush b = new SolidBrush(Color.White))
                 g.FillEllipse(b, kx, track.Y + 2, kd, kd);
-            using (Pen pen = new Pen(t.DarkMode ? Color.FromArgb(80, 255, 255, 255) : Color.FromArgb(40, 0, 0, 0)))
+            using (Pen pen = new Pen(Color.FromArgb(40, 0, 0, 0)))
                 g.DrawEllipse(pen, kx, track.Y + 2, kd, kd);
         }
     }
