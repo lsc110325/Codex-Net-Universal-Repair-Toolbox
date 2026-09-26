@@ -2350,28 +2350,30 @@ namespace CodexNetFix
             Label thanksSub = MakeLabel("感谢每一位提供反馈、建议和支持的朋友。", 8.7f, FontStyle.Regular, 24, 378, "hint");
             thanksSub.ForeColor = pal.TextSub;
 
-            PictureBox avatar = new PictureBox();
-            avatar.Left = 24; avatar.Top = 416; avatar.Width = 72; avatar.Height = 72;
-            avatar.SizeMode = PictureBoxSizeMode.Zoom;
-            avatar.Image = LoadAvatar();
-            avatar.Paint += delegate(object s, PaintEventArgs e)
-            {
-                Draw.Smooth(e.Graphics);
-                using (System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath())
-                {
-                    gp.AddEllipse(0, 0, avatar.Width - 1, avatar.Height - 1);
-                    avatar.Region = new Region(gp);
-                }
-            };
+            PictureBox avatar = AddThanksAvatar(24, 416, "avatar-liuyue.jpg");
             Label thanksName = MakeLabel("月球保安队长", 10f, FontStyle.Bold, 116, 424, "opt");
             thanksName.ForeColor = pal.Text;
             Label thanksDesc = MakeLabel("感谢支持与参与反馈", 8.7f, FontStyle.Regular, 116, 452, "hint");
             thanksDesc.ForeColor = pal.TextSub;
+
+            PictureBox avatar2 = AddThanksAvatar(24, 500, "avatar-hatsune.jpg");
+            Label thanksName2 = MakeLabel("初音憋来", 10f, FontStyle.Bold, 116, 508, "opt");
+            thanksName2.ForeColor = pal.Text;
+            Label thanksDesc2 = MakeLabel("感谢支持与参与反馈", 8.7f, FontStyle.Regular, 116, 536, "hint");
+            thanksDesc2.ForeColor = pal.TextSub;
+
+            PictureBox avatar3 = AddThanksAvatar(24, 584, "avatar-coldwind.jpg");
+            Label thanksName3 = MakeLabel("The sky 冷风", 10f, FontStyle.Bold, 116, 592, "opt");
+            thanksName3.ForeColor = pal.Text;
+            Label thanksDesc3 = MakeLabel("感谢支持与参与反馈", 8.7f, FontStyle.Regular, 116, 620, "hint");
+            thanksDesc3.ForeColor = pal.TextSub;
             Controls.Add(author); Controls.Add(note); Controls.Add(sponsor); Controls.Add(git); Controls.Add(repo);
             Controls.Add(divider); Controls.Add(thanks); Controls.Add(thanksSub); Controls.Add(avatar);
             Controls.Add(thanksName); Controls.Add(thanksDesc);
+            Controls.Add(avatar2); Controls.Add(thanksName2); Controls.Add(thanksDesc2);
+            Controls.Add(avatar3); Controls.Add(thanksName3); Controls.Add(thanksDesc3);
             // 让滚动范围覆盖全部内容。
-            Panel spacer = new Panel(); spacer.Left = 0; spacer.Top = 520; spacer.Width = 1; spacer.Height = 60; Controls.Add(spacer);
+            Panel spacer = new Panel(); spacer.Left = 0; spacer.Top = 690; spacer.Width = 1; spacer.Height = 60; Controls.Add(spacer);
             Shown += delegate { using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width, Height), 16)) Region = new Region(gp); };
         }
 
@@ -2383,11 +2385,29 @@ namespace CodexNetFix
             return l;
         }
 
-        Image LoadAvatar()
+        PictureBox AddThanksAvatar(int left, int top, string fileName)
+        {
+            PictureBox avatar = new PictureBox();
+            avatar.Left = left; avatar.Top = top; avatar.Width = 72; avatar.Height = 72;
+            avatar.SizeMode = PictureBoxSizeMode.Zoom;
+            avatar.Image = LoadAvatar(fileName);
+            avatar.Paint += delegate(object s, PaintEventArgs e)
+            {
+                Draw.Smooth(e.Graphics);
+                using (System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath())
+                {
+                    gp.AddEllipse(0, 0, avatar.Width - 1, avatar.Height - 1);
+                    avatar.Region = new Region(gp);
+                }
+            };
+            return avatar;
+        }
+
+        Image LoadAvatar(string fileName)
         {
             string[] paths = new string[] {
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gallery", "avatar-liuyue.jpg"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "avatar-liuyue.jpg")
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gallery", fileName),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", fileName)
             };
             foreach (string p in paths)
             {
