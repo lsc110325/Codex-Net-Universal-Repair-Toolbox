@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.1.150";
-        public const string Current = "v1.1.150";
-        public const string Last = "v1.1.125";
+        public const string Num = "1.1.175";
+        public const string Current = "v1.1.175";
+        public const string Last = "v1.1.150";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.1.125";
+        public const string Previous = "v1.1.150";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,11 +36,12 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
-                "新增独立 Token 优化导航分区，移除“更多”页里的旧入口",
-                "新增今日常用 Token 统计、7 日柱状图和今日 Token 预警阈值",
-                "Token 分区整合 Ponytail、省 Token 提示词、代理测速和网络监测",
-                "新增 Token 预警开关和 10M 步进阈值调整",
-                "版本更新为 v1.1.150"
+                "Token 统计改为后台加载并缓存，降低进入 Token 页面时的卡顿",
+                "新增“隐藏 / 显示 7 日图”按钮，可选择暂时隐藏柱状图",
+                "更多页新增“关于与鸣谢”，作者有话说已迁入独立可滚动窗口",
+                "关于页新增作者 L、赞助大大的、GitHub 地址和鸣谢名单",
+                "新增月球保安队长圆形头像，图片缺失时使用灰色默认头像",
+                "版本更新为 v1.1.175"
             };
         }
 
@@ -48,9 +49,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.1.175", "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "Token 统计改为后台加载并缓存，进入页面更流畅",
+                    "新增隐藏 / 显示 7 日图按钮",
+                    "更多页新增“关于与鸣谢”，独立窗口支持滚动",
+                    "加入作者 L、赞助大大的、GitHub 地址和月球保安队长头像",
+                    "版本更新为 v1.1.175"
+                },
                 new string[] {
                     "新增独立 Token 优化导航分区，移除“更多”页旧入口",
                     "新增今日 Token 统计、7 日柱状图和 Token 预警",

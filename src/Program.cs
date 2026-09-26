@@ -42,12 +42,15 @@ namespace CodexNetFix
         RoundPanel cardSideStatus;
         Panel topBar, sidebar, contentHost, bodyPanel, bottomBar;
         RoundButton btnLaunchProxy, btnAllInOne, btnSpeed, btnPack, btnSnap, btnRestore, btnPortQ, btnTimeQ;
-        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor;
+        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor, btnToggleTokenChart;
         SwitchBox swTokenWarn;
         Label lblTokenToday, lblTokenWeek, lblTokenLimit, lblTokenWarnStatus;
         TokenStatsChart tokenChart;
         System.Windows.Forms.Timer tokenMonitorTimer;
         bool tokenMonitoring = false;
+        bool tokenChartVisible = true, tokenStatsLoading = false;
+        List<Core.TokenDay> tokenStatsCache = null;
+        DateTime tokenStatsCacheTime = DateTime.MinValue;
         List<string> runLog = new List<string>();
 
         public MainForm()
@@ -751,7 +754,16 @@ namespace CodexNetFix
             lblTokenWeek = MkLabel("", 8.8f, FontStyle.Regular, 18, 78, "hint");
             tokenChart = new TokenStatsChart();
             tokenChart.Theme = pal; tokenChart.Left = 18; tokenChart.Top = 108; tokenChart.Width = 450; tokenChart.Height = 188;
-            cardChart.Controls.Add(lblTokenToday); cardChart.Controls.Add(lblTokenWeek); cardChart.Controls.Add(tokenChart);
+            btnToggleTokenChart = new RoundButton();
+            btnToggleTokenChart.Text = "隐藏图表"; btnToggleTokenChart.Ghost = true; btnToggleTokenChart.Theme = pal;
+            btnToggleTokenChart.Left = 378; btnToggleTokenChart.Top = 10; btnToggleTokenChart.Width = 90; btnToggleTokenChart.Height = 28;
+            btnToggleTokenChart.Click += delegate
+            {
+                tokenChartVisible = !tokenChartVisible;
+                tokenChart.Visible = tokenChartVisible;
+                btnToggleTokenChart.Text = tokenChartVisible ? "隐藏图表" : "显示图表";
+            };
+            cardChart.Controls.Add(lblTokenToday); cardChart.Controls.Add(lblTokenWeek); cardChart.Controls.Add(btnToggleTokenChart); cardChart.Controls.Add(tokenChart);
 
             RoundPanel cardWarn = MkCard("Token 预警", 502, 0, 288, 320);
             swTokenWarn = MkSwitch("启用今日预警", 18, 54, cardWarn, 150);
@@ -839,15 +851,17 @@ namespace CodexNetFix
                 ky += 28;
             }
 
-            Label foot = MkLabel("提示：所有修复操作都会先备份原文件；配置快照可随时恢复。", 8.5f, FontStyle.Regular, 18, 526, "hint");
-            foot.AutoSize = false; foot.Width = 450; foot.Height = 38;
+            RoundButton about = MkAction("关于与鸣谢", 18, 526, 216, delegate { ShowAboutThanks(); });
+            about.Height = 36;
+            Label foot = MkLabel("提示：所有修复操作都会先备份原文件。", 8.2f, FontStyle.Regular, 252, 536, "hint");
+            foot.AutoSize = false; foot.Width = 216; foot.Height = 30;
 
             cardTools.Controls.Add(btnLaunchProxy); cardTools.Controls.Add(btnAllInOne);
             cardTools.Controls.Add(btnSpeed); cardTools.Controls.Add(btnPack);
             cardTools.Controls.Add(btnSnap); cardTools.Controls.Add(btnRestore);
             cardTools.Controls.Add(btnPortQ); cardTools.Controls.Add(btnTimeQ);
             cardTools.Controls.Add(openCodexDir); cardTools.Controls.Add(openToolDir);
-            cardTools.Controls.Add(sec); cardTools.Controls.Add(foot);
+            cardTools.Controls.Add(sec); cardTools.Controls.Add(about); cardTools.Controls.Add(foot);
 
             RoundPanel cardHelp = MkCard("功能说明", 502, 0, 288, 598);
             string[] help = new string[] {
@@ -996,21 +1010,15 @@ namespace CodexNetFix
 
         void BuildAboutPage()
         {
-            RoundPanel formalCard = MkCard("正式版更新", 0, 150, 387, 330);
+            RoundPanel formalCard = MkCard("正式版更新", 0, 0, 387, 330);
             formalCard.Radius = 16;
             BuildVersionColumn(formalCard, false);
-            RoundPanel betaCard = MkCard("测试版更新", 403, 150, 387, 330);
+            RoundPanel betaCard = MkCard("测试版更新", 403, 0, 387, 330);
             betaCard.Radius = 16;
             BuildVersionColumn(betaCard, true);
-            // 作者有话说：固定钉在更新日志页顶部（不随版本列表滚动）
-            RoundPanel authorFixed = MkCard("作者有话说", 0, 0, 790, 138);
-            Label noteFixed = MkLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 20, 50, "opt");
-            noteFixed.AutoSize = false; noteFixed.Width = 748; noteFixed.Height = 80;
-            authorFixed.Controls.Add(noteFixed);
-            pageAbout.Controls.Add(authorFixed);
             pageAbout.Controls.Add(formalCard); pageAbout.Controls.Add(betaCard);
 
-            cardHistory = MkCard("最近修复记录", 0, 492, 790, 150);
+            cardHistory = MkCard("最近修复记录", 0, 342, 790, 256);
             RoundButton clr = new RoundButton();
             clr.Text = "清空记录"; clr.Ghost = true;
             clr.Width = 86; clr.Height = 28; clr.Left = cardHistory.Width - 104; clr.Top = 10;
@@ -1025,7 +1033,7 @@ namespace CodexNetFix
             cardHistory.Controls.Add(clr);
 
             FlowLayoutPanel h = new FlowLayoutPanel();
-            h.Left = 18; h.Top = 46; h.Width = 754; h.Height = 88;
+            h.Left = 18; h.Top = 46; h.Width = 754; h.Height = 194;
             h.AutoScroll = true; h.FlowDirection = FlowDirection.TopDown; h.WrapContents = false;
             h.Tag = "flowbg"; h.Name = "historyList";
             h.Resize += delegate { foreach (Control c in h.Controls) c.Width = h.ClientSize.Width - 8; };
@@ -1204,15 +1212,44 @@ namespace CodexNetFix
         void RefreshTokenPage()
         {
             if (lblTokenToday == null) return;
-            List<Core.TokenDay> usage = Core.TokenUsageLast7Days();
+            if (swTokenWarn != null) swTokenWarn.Checked = cfg.TokenWarnEnabled;
+            if (lblTokenLimit != null) lblTokenLimit.Text = "今日预警阈值：" + cfg.TokenWarnMillions + "M";
+            if (tokenStatsCache != null && (DateTime.Now - tokenStatsCacheTime).TotalSeconds < 60)
+            {
+                ApplyTokenStats(tokenStatsCache);
+                return;
+            }
+            if (tokenStatsLoading) return;
+            tokenStatsLoading = true;
+            lblTokenToday.Text = "正在后台统计 Token...";
+            lblTokenWeek.Text = "扫描本机 Codex sessions 日志";
+            Thread t = new Thread(delegate ()
+            {
+                List<Core.TokenDay> usage = Core.TokenUsageLast7Days();
+                BeginInvoke(new Action(delegate
+                {
+                    tokenStatsCache = usage;
+                    tokenStatsCacheTime = DateTime.Now;
+                    tokenStatsLoading = false;
+                    ApplyTokenStats(usage);
+                }));
+            });
+            t.IsBackground = true; t.Start();
+        }
+
+        void ApplyTokenStats(List<Core.TokenDay> usage)
+        {
             long today = usage.Count > 0 ? usage[usage.Count - 1].Tokens : 0;
             long week = 0; foreach (Core.TokenDay d in usage) week += d.Tokens;
             lblTokenToday.Text = "今日：" + today.ToString("N0") + " tokens";
             lblTokenWeek.Text = "近 7 日累计：" + week.ToString("N0") + " tokens";
-            if (tokenChart != null) { tokenChart.Data = usage; tokenChart.Invalidate(); }
-            if (swTokenWarn != null) swTokenWarn.Checked = cfg.TokenWarnEnabled;
+            if (tokenChart != null)
+            {
+                tokenChart.Data = usage;
+                tokenChart.Visible = tokenChartVisible;
+                tokenChart.Invalidate();
+            }
             long limit = (long)cfg.TokenWarnMillions * 1000000L;
-            if (lblTokenLimit != null) lblTokenLimit.Text = "今日预警阈值：" + cfg.TokenWarnMillions + "M";
             if (lblTokenWarnStatus != null)
             {
                 if (!cfg.TokenWarnEnabled) lblTokenWarnStatus.Text = "预警已关闭。";
@@ -1337,6 +1374,12 @@ namespace CodexNetFix
             RefreshSwatches();
             SetStatus("调试码已使用，三个彩蛋颜色已解锁", pal.Ok);
             History.Add("调试码", "已使用", "解锁全部彩蛋颜色");
+        }
+
+        void ShowAboutThanks()
+        {
+            using (AboutThanksDialog dlg = new AboutThanksDialog(pal))
+                dlg.ShowDialog(this);
         }
 
         void RecordRepair()
@@ -2260,6 +2303,130 @@ namespace CodexNetFix
         }
     }
     // 多个代理软件时的选择对话框
+    public class AboutThanksDialog : Form
+    {
+        public AboutThanksDialog(Palette pal)
+        {
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterParent;
+            ClientSize = new Size(640, 520);
+            Text = "关于与鸣谢";
+            AutoScroll = true;
+            BackColor = pal.ContentBg;
+            Font = Draw.Ui(9.5f, FontStyle.Regular);
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Panel head = new Panel();
+            head.Left = 0; head.Top = 0; head.Width = ClientSize.Width; head.Height = 50; head.BackColor = pal.Accent;
+            Label title = new Label();
+            title.Text = "关于与鸣谢"; title.Font = Draw.Ui(12f, FontStyle.Bold);
+            title.ForeColor = Color.White; title.BackColor = Color.Transparent; title.AutoSize = true; title.Left = 20; title.Top = 14;
+            RoundButton close = new RoundButton();
+            close.Text = "×"; close.Primary = true; close.Theme = pal; close.TextOverride = Color.White;
+            close.Left = ClientSize.Width - 48; close.Top = 10; close.Width = 34; close.Height = 30;
+            close.Click += delegate { Close(); };
+            head.Controls.Add(title); head.Controls.Add(close); AttachDrag(head); AttachDrag(title);
+            Controls.Add(head);
+
+            Label author = MakeLabel("作者：L", 11f, FontStyle.Bold, 24, 70, "opt");
+            author.ForeColor = pal.Text;
+            Label note = MakeLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 24, 102, "opt");
+            note.AutoSize = false; note.Width = 570; note.Height = 105;
+            RoundButton sponsor = new RoundButton();
+            sponsor.Text = "赞助大大的"; sponsor.Primary = true; sponsor.Theme = pal;
+            sponsor.Left = 24; sponsor.Top = 220; sponsor.Width = 180; sponsor.Height = 38;
+            sponsor.Click += delegate { try { Process.Start("https://afdian.com/a/cnurt"); } catch { } };
+
+            Label git = MakeLabel("GitHub 开源代码", 10f, FontStyle.Bold, 24, 282, "opt");
+            git.ForeColor = pal.Text;
+            RoundButton repo = new RoundButton();
+            repo.Text = "打开 GitHub"; repo.Theme = pal;
+            repo.Left = 420; repo.Top = 270; repo.Width = 174; repo.Height = 34;
+            repo.Click += delegate { try { Process.Start("https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox"); } catch { } };
+            Panel divider = new Panel();
+            divider.Left = 24; divider.Top = 330; divider.Width = 570; divider.Height = 2; divider.BackColor = pal.Accent;
+            Label thanks = MakeLabel("鸣谢", 11f, FontStyle.Bold, 24, 350, "opt");
+            thanks.ForeColor = pal.Accent;
+            Label thanksSub = MakeLabel("感谢每一位提供反馈、建议和支持的朋友。", 8.7f, FontStyle.Regular, 24, 378, "hint");
+            thanksSub.ForeColor = pal.TextSub;
+
+            PictureBox avatar = new PictureBox();
+            avatar.Left = 24; avatar.Top = 416; avatar.Width = 72; avatar.Height = 72;
+            avatar.SizeMode = PictureBoxSizeMode.Zoom;
+            avatar.Image = LoadAvatar();
+            avatar.Paint += delegate(object s, PaintEventArgs e)
+            {
+                Draw.Smooth(e.Graphics);
+                using (System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath())
+                {
+                    gp.AddEllipse(0, 0, avatar.Width - 1, avatar.Height - 1);
+                    avatar.Region = new Region(gp);
+                }
+            };
+            Label thanksName = MakeLabel("月球保安队长", 10f, FontStyle.Bold, 116, 424, "opt");
+            thanksName.ForeColor = pal.Text;
+            Label thanksDesc = MakeLabel("感谢支持与参与反馈", 8.7f, FontStyle.Regular, 116, 452, "hint");
+            thanksDesc.ForeColor = pal.TextSub;
+            Controls.Add(author); Controls.Add(note); Controls.Add(sponsor); Controls.Add(git); Controls.Add(repo);
+            Controls.Add(divider); Controls.Add(thanks); Controls.Add(thanksSub); Controls.Add(avatar);
+            Controls.Add(thanksName); Controls.Add(thanksDesc);
+            // 让滚动范围覆盖全部内容。
+            Panel spacer = new Panel(); spacer.Left = 0; spacer.Top = 520; spacer.Width = 1; spacer.Height = 60; Controls.Add(spacer);
+            Shown += delegate { using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width, Height), 16)) Region = new Region(gp); };
+        }
+
+        Label MakeLabel(string text, float size, FontStyle style, int x, int y, string role)
+        {
+            Label l = new Label();
+            l.Text = text; l.Font = Draw.Ui(size, style); l.AutoSize = true; l.Left = x; l.Top = y;
+            l.BackColor = Color.Transparent; l.Tag = role;
+            return l;
+        }
+
+        Image LoadAvatar()
+        {
+            string[] paths = new string[] {
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gallery", "avatar-liuyue.jpg"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "avatar-liuyue.jpg")
+            };
+            foreach (string p in paths)
+            {
+                try { if (File.Exists(p)) return Image.FromFile(p); } catch { }
+            }
+            Bitmap b = new Bitmap(72, 72);
+            using (Graphics g = Graphics.FromImage(b))
+            {
+                g.Clear(Color.FromArgb(225, 228, 235));
+                using (SolidBrush body = new SolidBrush(Color.FromArgb(165, 171, 184)))
+                    g.FillEllipse(body, 17, 42, 38, 38);
+                using (SolidBrush head = new SolidBrush(Color.FromArgb(165, 171, 184)))
+                    g.FillEllipse(head, 23, 12, 26, 26);
+            }
+            return b;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+        void AttachDrag(Control c)
+        {
+            c.MouseDown += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Left) return;
+                try { ReleaseCapture(); SendMessage(Handle, 0xA1, 0x2, 0); } catch { }
+            };
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Draw.Smooth(e.Graphics);
+            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width - 1, Height - 1), 16))
+            using (Pen p = new Pen(Color.FromArgb(40, 0, 0, 0)))
+                e.Graphics.DrawPath(p, gp);
+        }
+    }
+
     public class TokenStatsChart : Control
     {
         public List<Core.TokenDay> Data = new List<Core.TokenDay>();
