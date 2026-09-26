@@ -202,7 +202,7 @@ namespace CodexNetFix
     public static class Anim
     {
         public static bool Enabled = true;
-        class Job { public Control Target; public long Start; public int Duration; public Action<float> Apply; public Action Done; }
+        class Job { public Control Target; public long Start; public int Duration; public Action<float> Apply; public Action Done; public bool Invalidate = true; }
         static readonly List<Job> jobs = new List<Job>();
         static System.Windows.Forms.Timer timer;
 
@@ -210,9 +210,20 @@ namespace CodexNetFix
 
         public static void Start(Control target, int durationMs, Action<float> apply, Action done)
         {
+            StartInternal(target, durationMs, apply, done, true);
+        }
+
+        public static void StartQuiet(Control target, int durationMs, Action<float> apply, Action done)
+        {
+            StartInternal(target, durationMs, apply, done, false);
+        }
+
+        static void StartInternal(Control target, int durationMs, Action<float> apply, Action done, bool invalidate)
+        {
             if (!Enabled) { try { apply(1f); } catch { } if (done != null) { try { done(); } catch { } } return; }
             Job j = new Job();
             j.Target = target; j.Start = Environment.TickCount; j.Duration = Math.Max(16, durationMs); j.Apply = apply; j.Done = done;
+            j.Invalidate = invalidate;
             jobs.Add(j);
             if (timer == null) { timer = new System.Windows.Forms.Timer(); timer.Interval = 10; timer.Tick += delegate(object s, EventArgs e) { Tick(); }; }
             if (!timer.Enabled) timer.Start();
@@ -234,7 +245,7 @@ namespace CodexNetFix
                 float t = (float)(now - j.Start) / j.Duration;
                 if (t > 1f) t = 1f;
                 float e = t < 0.5f ? (4f * t * t * t) : (1f - (float)Math.Pow(-2f * t + 2f, 3f) / 2f);   // ease-in-out cubic
-                try { j.Apply(e); j.Target.Invalidate(); } catch { }
+                try { j.Apply(e); if (j.Invalidate) j.Target.Invalidate(); } catch { }
                 if (t >= 1f)
                 {
                     jobs.RemoveAt(i);

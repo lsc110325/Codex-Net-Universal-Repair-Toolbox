@@ -48,7 +48,7 @@ codex  chatgpt  openai  proxy  clash  windows  sandbox  network-troubleshooting 
 # 在“开源文件”目录下
 git init
 git add .
-git commit -m "perf: smooth navigation animation v1.0.300"
+git commit -m "fix: hide console and add window animations v1.0.325"
 git branch -M main
 git remote add origin https://github.com/<你的用户名>/Codex-Net-Universal-Repair-Toolbox.git
 git push -u origin main
@@ -58,7 +58,7 @@ git push -u origin main
 
 1. 本地构建：`powershell -ExecutionPolicy Bypass -File src\build.ps1`
 2. 在 GitHub → Releases → Draft a new release
-3. Tag 填 `v1.0.300`，标题填 `v1.0.300`
+3. Tag 填 `v1.0.325`，标题填 `v1.0.325`
 4. 把构建出的 `Codex网络修复工具.exe` 作为附件上传
 5. 说明可直接复制下方模板
 
@@ -67,12 +67,12 @@ git push -u origin main
 ## 6. Release 说明模板
 
 ```markdown
-## v1.0.300
+## v1.0.325
 
 ### 本次更新
-- 导航栏启用双缓冲，修复切换闪烁
-- 提高动画刷新频率并取消重叠动画，缓解卡顿
-- 移除导航点击时的误拖动逻辑
+- 改为纯 GUI 子系统，移除后台命令提示符
+- 修复关闭提示符导致软件退出和最小化偶发误关闭
+- 新增打开/最小化/恢复/关闭动画，保持圆角无黑边
 
 ### 下载
 - `Codex网络修复工具.exe`（单文件，免安装）

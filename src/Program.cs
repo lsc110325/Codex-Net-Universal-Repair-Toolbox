@@ -20,6 +20,8 @@ namespace CodexNetFix
         bool busyMonitor = false;
 
         Panel content;
+        bool allowClose = false, closingWindow = false;
+        int windowAnimToken = 0;
         NavItem navRepair, navCheck, navMore, navAbout, navSettings;
         string currentPage = "repair";
         float pillX = -1f, pillW = 0f;   // 导航胶囊滑动
@@ -62,18 +64,30 @@ namespace CodexNetFix
             BindSettings();
             ApplyTheme();
 
-            Resize += delegate { LayoutShell(); ApplyRoundRegion(); };
+            Resize += delegate
+            {
+                LayoutShell(); ApplyRoundRegion();
+                if (WindowState == FormWindowState.Normal && Visible && Opacity < 0.99f && !closingWindow) AnimateRestoreWindow();
+            };
             // 启用 DWM 毛玻璃（磨砂）背景
             ApplyRoundRegion();
             Load += delegate { OnLoaded(); };
-            Shown += delegate { BeginInvoke(new Action(delegate { ShowStartupDialogs(); })); };
+            Shown += delegate
+            {
+                AnimateOpenWindow();
+                BeginInvoke(new Action(delegate { ShowStartupDialogs(); }));
+            };
             FormClosing += delegate(object s, FormClosingEventArgs e)
             {
-                if (cfg.TrayResident && e.CloseReason == CloseReason.UserClosing)
+                if (allowClose) return;
+                if (e.CloseReason != CloseReason.UserClosing) return;
+                e.Cancel = true;
+                if (cfg.TrayResident)
                 {
-                    e.Cancel = true; Hide();
+                    AnimateHideToTray();
                     if (tray != null) tray.ShowBalloonTip(2000, "Codex 网络修复工具", "已最小化到托盘，仍在后台运行。", ToolTipIcon.Info);
                 }
+                else AnimateCloseWindow();
             };
         }
 
@@ -98,6 +112,83 @@ namespace CodexNetFix
             catch { }
         }
 
+        void AnimateOpenWindow()
+        {
+            int token = ++windowAnimToken;
+            Opacity = 0;
+            Anim.Cancel(this);
+            Anim.StartQuiet(this, 180, delegate(float e)
+            {
+                if (token == windowAnimToken) Opacity = e;
+            }, delegate
+            {
+                if (token == windowAnimToken) Opacity = 1;
+            });
+        }
+
+        void AnimateMinimizeWindow()
+        {
+            if (closingWindow || WindowState == FormWindowState.Minimized) return;
+            int token = ++windowAnimToken;
+            Anim.Cancel(this);
+            Anim.StartQuiet(this, 130, delegate(float e)
+            {
+                if (token == windowAnimToken) Opacity = 1f - e;
+            }, delegate
+            {
+                if (token != windowAnimToken) return;
+                Opacity = 0;
+                WindowState = FormWindowState.Minimized;
+            });
+        }
+
+        void AnimateRestoreWindow()
+        {
+            if (closingWindow || WindowState != FormWindowState.Normal || !Visible) return;
+            int token = ++windowAnimToken;
+            Anim.Cancel(this);
+            Anim.StartQuiet(this, 160, delegate(float e)
+            {
+                if (token == windowAnimToken) Opacity = e;
+            }, delegate
+            {
+                if (token == windowAnimToken) Opacity = 1;
+            });
+        }
+
+        void AnimateHideToTray()
+        {
+            if (closingWindow) return;
+            int token = ++windowAnimToken;
+            Anim.Cancel(this);
+            Anim.StartQuiet(this, 130, delegate(float e)
+            {
+                if (token == windowAnimToken) Opacity = 1f - e;
+            }, delegate
+            {
+                if (token != windowAnimToken) return;
+                Opacity = 1;
+                Hide();
+            });
+        }
+
+        void AnimateCloseWindow()
+        {
+            if (closingWindow) return;
+            closingWindow = true;
+            int token = ++windowAnimToken;
+            Anim.Cancel(this);
+            Anim.StartQuiet(this, 150, delegate(float e)
+            {
+                if (token == windowAnimToken) Opacity = 1f - e;
+            }, delegate
+            {
+                if (token != windowAnimToken) return;
+                allowClose = true;
+                Close();
+            });
+        }
+
         void BuildHeader()
         {
             topBar = new BufferedPanel();
@@ -120,9 +211,9 @@ namespace CodexNetFix
             navSettings = MakeNav("设置", 684, "settings");
             // 导航项不加入控件树：由 topBar 父级统一绘制 + 命中测试（子控件会擦除父级绘制）
 
-            RoundButton mn = WinBtn("—", delegate { WindowState = FormWindowState.Minimized; });
+            RoundButton mn = WinBtn("—", delegate { AnimateMinimizeWindow(); });
             mn.Tag = "winbtn";
-            RoundButton cl = WinBtn("✕", delegate { Close(); });
+            RoundButton cl = WinBtn("✕", delegate { AnimateCloseWindow(); });
             cl.Tag = "winclose"; cl.HoverFillColor = Color.FromArgb(255, 232, 82, 82); cl.HoverAlpha = 60;
             winButtonsCache = new RoundButton[] { mn, cl };
             topBar.Controls.Add(mn); topBar.Controls.Add(cl);
@@ -1717,7 +1808,7 @@ namespace CodexNetFix
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Items.Add("显示主界面", null, delegate { Show(); WindowState = FormWindowState.Normal; Activate(); });
             menu.Items.Add("立即自检", null, delegate { Show(); ShowPage("check"); DoCheck(true); });
-            menu.Items.Add("退出", null, delegate { cfg.TrayResident = false; SaveSettings(false); tray.Visible = false; Close(); Application.Exit(); });
+            menu.Items.Add("退出", null, delegate { cfg.TrayResident = false; SaveSettings(false); tray.Visible = false; AnimateCloseWindow(); });
             tray.ContextMenuStrip = menu;
             tray.DoubleClick += delegate { Show(); WindowState = FormWindowState.Normal; Activate(); };
 

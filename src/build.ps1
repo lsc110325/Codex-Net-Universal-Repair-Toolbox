@@ -18,14 +18,14 @@ $env:TEMP = $buildTemp
 $env:TMP  = $buildTemp
 
 Write-Host '== 第 1 遍：编译（CLI 版） =='
-& $csc /nologo /target:exe /platform:anycpu /langversion:5 /codepage:65001 /utf8output @refs /out:$exe @files
+& $csc /nologo /target:winexe /platform:anycpu /langversion:5 /codepage:65001 /utf8output @refs /out:$exe @files
 if ($LASTEXITCODE -ne 0) { throw "编译失败: $LASTEXITCODE" }
 
 Write-Host '== 生成图标 =='
 Start-Process -FilePath $exe -ArgumentList @('--cli','icon',$ico) -Wait -NoNewWindow
 
 Write-Host '== 第 2 遍：带图标编译 =='
-& $csc /nologo /target:exe /platform:anycpu /langversion:5 /codepage:65001 /utf8output /win32icon:$ico @refs /out:$exe @files
+& $csc /nologo /target:winexe /platform:anycpu /langversion:5 /codepage:65001 /utf8output /win32icon:$ico @refs /out:$exe @files
 if ($LASTEXITCODE -ne 0) { throw "最终编译失败: $LASTEXITCODE" }
 
 Write-Host '== 生成图标预览 =='

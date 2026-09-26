@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.300";
-        public const string Current = "v1.0.300";
-        public const string Last = "v1.0.275";
+        public const string Num = "1.0.325";
+        public const string Current = "v1.0.325";
+        public const string Last = "v1.0.300";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.0.275";
+        public const string Previous = "v1.0.300";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,6 +36,11 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
+                "程序改为纯 Windows GUI 子系统，不再生成后台命令提示符窗口",
+                "新增打开、最小化、恢复和关闭软件的淡入淡出动画",
+                "修复最小化后可能被误关闭的问题，关闭提示符不再影响软件",
+                "动画期间保留圆角窗口区域，避免出现黑色边框",
+                "版本更新为 v1.0.325",
                 "优化导航栏动画：顶部栏启用双缓冲，消除切换闪烁",
                 "提高动画刷新频率并自动取消重叠动画，缓解快速点击时的卡顿",
                 "移除导航点击时误触发的窗口拖动逻辑",
@@ -68,9 +73,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "移除后台命令提示符宿主，关闭提示符不再导致软件退出",
+                    "新增打开 / 最小化 / 恢复 / 关闭淡入淡出动画",
+                    "修复最小化偶发误关闭问题",
+                    "动画保持圆角窗口区域，无黑色边框",
+                    "版本更新为 v1.0.325"
+                },
                 new string[] {
                     "导航栏启用双缓冲绘制，消除切换时闪烁",
                     "动画刷新频率提高，并自动取消重叠动画",
