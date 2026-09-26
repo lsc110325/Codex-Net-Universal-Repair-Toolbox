@@ -734,7 +734,11 @@ namespace CodexNetFix
         {
             try
             {
-                Process.Start(path);
+                ProcessStartInfo psi = new ProcessStartInfo(path);
+                psi.UseShellExecute = true;
+                string dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir)) psi.WorkingDirectory = dir;
+                Process.Start(psi);
                 if (log != null) log.Add("  ✓ 已启动: " + path);
                 return "OK";
             }
@@ -1364,6 +1368,9 @@ namespace CodexNetFix
         public static List<ProcInfo> CodexProcesses()
         {
             List<ProcInfo> list = new List<ProcInfo>();
+            int selfId = Process.GetCurrentProcess().Id;
+            string selfPath = "";
+            try { selfPath = Process.GetCurrentProcess().MainModule.FileName; } catch { }
             foreach (Process p in Process.GetProcesses())
             {
                 string n = "";
@@ -1371,10 +1378,16 @@ namespace CodexNetFix
                 string ln = n.ToLower();
                 bool hit = ln == "chatgpt" || ln.StartsWith("codex") || ln.IndexOf("codex-") >= 0;
                 if (!hit) continue;
+                if (p.Id == selfId) continue;
+                if (ln.IndexOf("网络修复") >= 0 || ln.IndexOf("netfix") >= 0 || ln.IndexOf("networkfix") >= 0) continue;
+                string path = "";
+                try { path = p.MainModule.FileName; } catch { }
+                if (path.Length > 0 && selfPath.Length > 0 &&
+                    string.Equals(path, selfPath, StringComparison.OrdinalIgnoreCase)) continue;
                 ProcInfo i = new ProcInfo();
                 i.Id = p.Id;
                 i.Name = n;
-                try { i.Path = p.MainModule.FileName; } catch { }
+                i.Path = path;
                 list.Add(i);
             }
             return list;

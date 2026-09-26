@@ -1341,7 +1341,17 @@ namespace CodexNetFix
                     {
                         using (ProxyChooser dlg = new ProxyChooser(apps, pal))
                         {
-                            if (dlg.ShowDialog(this) == DialogResult.OK) path = dlg.Chosen;
+                            if (dlg.ShowDialog(this) == DialogResult.OK)
+                            {
+                                if (dlg.BrowseRequested)
+                                {
+                                    OpenFileDialog browse = new OpenFileDialog();
+                                    browse.Title = "选择代理软件主程序";
+                                    browse.Filter = "可执行文件|*.exe";
+                                    if (browse.ShowDialog(this) == DialogResult.OK) path = browse.FileName;
+                                }
+                                else path = dlg.Chosen;
+                            }
                         }
                     }
                     else
@@ -2011,6 +2021,7 @@ namespace CodexNetFix
     public class ProxyChooser : Form
     {
         public string Chosen = "";
+        public bool BrowseRequested = false;
         public ProxyChooser(List<Core.ProxyApp> apps, Palette pal)
         {
             Text = "选择要启动的代理软件";
@@ -2029,6 +2040,9 @@ namespace CodexNetFix
             lb.Left = 16; lb.Top = 42; lb.Width = 588; lb.Height = 200;
             foreach (Core.ProxyApp a in apps) lb.Items.Add(a.Name + "    —    " + a.Path);
             if (lb.Items.Count > 0) lb.SelectedIndex = 0;
+            Button browse = new Button();
+            browse.Text = "手动选择..."; browse.Left = 250; browse.Top = 258; browse.Width = 120; browse.Height = 34;
+            browse.Click += delegate { BrowseRequested = true; DialogResult = DialogResult.OK; Close(); };
             Button ok = new Button();
             ok.Text = "启动这个"; ok.Left = 380; ok.Top = 258; ok.Width = 110; ok.Height = 34;
             ok.Click += delegate
@@ -2038,7 +2052,7 @@ namespace CodexNetFix
             Button cancel = new Button();
             cancel.Text = "取消"; cancel.Left = 500; cancel.Top = 258; cancel.Width = 104; cancel.Height = 34;
             cancel.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
-            Controls.Add(t); Controls.Add(lb); Controls.Add(ok); Controls.Add(cancel);
+            Controls.Add(t); Controls.Add(lb); Controls.Add(browse); Controls.Add(ok); Controls.Add(cancel);
         }
     }
     public static class Program

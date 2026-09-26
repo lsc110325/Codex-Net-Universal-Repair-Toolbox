@@ -48,7 +48,7 @@ codex  chatgpt  openai  proxy  clash  windows  sandbox  network-troubleshooting 
 # 在“开源文件”目录下
 git init
 git add .
-git commit -m "feat: release v1.0.250"
+git commit -m "fix: release v1.0.275"
 git branch -M main
 git remote add origin https://github.com/<你的用户名>/Codex-Net-Universal-Repair-Toolbox.git
 git push -u origin main
@@ -58,7 +58,7 @@ git push -u origin main
 
 1. 本地构建：`powershell -ExecutionPolicy Bypass -File src\build.ps1`
 2. 在 GitHub → Releases → Draft a new release
-3. Tag 填 `v1.0.250`，标题填 `v1.0.250`
+3. Tag 填 `v1.0.275`，标题填 `v1.0.275`
 4. 把构建出的 `Codex网络修复工具.exe` 作为附件上传
 5. 说明可直接复制下方模板
 
@@ -67,14 +67,12 @@ git push -u origin main
 ## 6. Release 说明模板
 
 ```markdown
-## v1.0.250
+## v1.0.275
 
 ### 本次更新
-- 新增「更多」分区：启动代理软件、一键全流程、代理测速、配置快照、反馈包、端口与时间诊断
-- 新增 Ctrl+F / Ctrl+T / Ctrl+R / F5 / Ctrl+M 快捷键
-- 新增快捷键总开关与逐项自定义编辑器，支持冲突检测和恢复默认
-- 新增命令行诊断入口
-- 修复窗口标题拖动和系统时间检查兼容性
+- 修复重启 Codex / 一键全流程误关闭工具自身的问题
+- 修复代理软件选择窗口无法手动选择其他 exe
+- 提升便携代理软件启动兼容性
 
 ### 下载
 - `Codex网络修复工具.exe`（单文件，免安装）
