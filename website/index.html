@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex 网络修复工具</title>
+  <style>
+    :root {
+      --accent: #60a0f8;
+      --accent-soft: #e8f2ff;
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --edge: #e5e8ee;
+      --text: #1c1e22;
+      --sub: #747c8c;
+      --shadow: 0 12px 32px rgba(60, 90, 140, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--text); background: var(--bg); font: 15px/1.7 "Microsoft YaHei UI", "Segoe UI", sans-serif; }
+    a { color: inherit; text-decoration: none; }
+    .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 22px; min-height: 62px; padding: 0 28px; color: white; background: var(--accent); box-shadow: 0 6px 20px rgba(60,130,230,.16); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; white-space: nowrap; }
+    .brand img { width: 30px; height: 30px; border-radius: 8px; }
+    .nav { display: flex; gap: 6px; overflow-x: auto; }
+    .nav a { padding: 8px 13px; border-radius: 10px; white-space: nowrap; }
+    .nav a:hover { background: rgba(255,255,255,.18); }
+    .top-actions { margin-left: auto; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 16px; border-radius: 10px; font-weight: 600; background: white; color: var(--accent); }
+    main { width: min(1080px, calc(100% - 32px)); margin: 0 auto; }
+    .hero { display: grid; grid-template-columns: 1.35fr .65fr; gap: 24px; align-items: center; padding: 54px 0 34px; }
+    .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
+    h1 { margin: 8px 0 12px; font-size: clamp(30px, 5vw, 48px); line-height: 1.2; }
+    .lead { max-width: 680px; color: var(--sub); font-size: 17px; }
+    .hero-card, .card { background: var(--card); border: 1px solid var(--edge); border-radius: 18px; box-shadow: var(--shadow); }
+    .hero-card { padding: 22px; }
+    .hero-card strong { display: block; margin-bottom: 12px; font-size: 19px; }
+    .hero-card ul, .card ul { margin: 0; padding-left: 20px; color: var(--sub); }
+    .hero-card li, .card li { margin: 7px 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .actions .btn { background: var(--accent); color: white; }
+    .actions .btn.plain { background: white; color: var(--accent); border: 1px solid var(--edge); }
+    .section { padding: 30px 0 10px; }
+    .section h2 { margin: 0 0 6px; font-size: 25px; }
+    .section > p { margin: 0 0 18px; color: var(--sub); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 20px; }
+    .card h3 { margin: 0 0 8px; font-size: 17px; }
+    .card p { margin: 0; color: var(--sub); }
+    .tag { display: inline-block; margin-bottom: 12px; padding: 3px 9px; border-radius: 999px; color: var(--accent); background: var(--accent-soft); font-size: 12px; font-weight: 700; }
+    .wide { grid-column: span 2; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .links a { padding: 9px 13px; border: 1px solid var(--edge); border-radius: 10px; color: var(--accent); background: white; font-weight: 600; }
+    footer { margin-top: 44px; padding: 24px 0 36px; color: var(--sub); text-align: center; }
+    @media (max-width: 800px) {
+      .topbar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; }
+      .top-actions { margin-left: 0; }
+      .hero { grid-template-columns: 1fr; padding-top: 34px; }
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
+      .wide { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top">
+      <img src="../assets/icon-preview.png" alt="工具图标">
+      <span>Codex 网络修复工具</span>
+    </a>
+    <nav class="nav">
+      <a href="#features">功能</a>
+      <a href="#more">更多工具</a>
+      <a href="#contribute">开发建议</a>
+      <a href="https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox/blob/main/CHANGELOG.md">更新日志</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn" href="https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox/releases">下载</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">WINDOWS · 绿色单文件</div>
+        <h1>让 Codex 网络连接<br>恢复简单一点</h1>
+        <p class="lead">自动探测本机代理、修复 Codex 配置与环境变量、处理 git TLS，并提供自检、回滚、快捷修复和实用工具。</p>
+        <div class="actions">
+          <a class="btn" href="https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox/releases">下载最新版</a>
+          <a class="btn plain" href="#features">查看功能</a>
+          <a class="btn plain" href="https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox">GitHub 仓库</a>
+        </div>
+      </div>
+      <aside class="hero-card">
+        <strong>当前版本：v1.0.350</strong>
+        <ul>
+          <li>免安装、免管理员</li>
+          <li>支持 Windows 10 / 11</li>
+          <li>配置修改前自动备份</li>
+          <li>支持一键回滚</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="section" id="features">
+      <h2>主要功能</h2>
+      <p>针对 Codex 在本机代理、沙箱网络和 git 配置上的常见问题。</p>
+      <div class="grid">
+        <article class="card"><span class="tag">一键修复</span><h3>自动探测代理</h3><p>扫描本机代理端口，验证 HTTP 代理握手与真实出网，再写入 Codex 配置。</p></article>
+        <article class="card"><span class="tag">环境修复</span><h3>覆盖黑洞代理</h3><p>写入 shell_environment_policy.set，避免 Codex 沙箱注入不可用代理。</p></article>
+        <article class="card"><span class="tag">Git 修复</span><h3>修复 git TLS</h3><p>注入 GIT_EXEC_PATH，并把 git TLS 后端切换为 openssl。</p></article>
+        <article class="card"><span class="tag">安全</span><h3>备份与回滚</h3><p>修改 config.toml、.env 和 .gitconfig 前自动备份，可一键还原。</p></article>
+        <article class="card"><span class="tag">诊断</span><h3>全面自检</h3><p>检查端口、出网、配置、环境变量、git 和回环保护等关键状态。</p></article>
+        <article class="card"><span class="tag">个性化</span><h3>快捷键设置</h3><p>支持开关快捷键，并逐项自定义修复、自检、重启和更多页快捷键。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="more">
+      <h2>更多工具</h2>
+      <p>适合第一次使用，也适合遇到问题后快速定位。</p>
+      <div class="grid">
+        <article class="card wide"><span class="tag">实用工具</span><h3>启动代理软件</h3><p>自动发现 FlClash、iKuuu、v2rayN、Hiddify 等程序，也可以手动选择代理 exe。</p></article>
+        <article class="card"><span class="tag">诊断</span><h3>代理测速</h3><p>测试百度、GitHub、OpenAI 域名的代理连接延迟。</p></article>
+        <article class="card"><span class="tag">备份</span><h3>配置快照</h3><p>备份与恢复 config.toml、.env、.gitconfig。</p></article>
+        <article class="card"><span class="tag">反馈</span><h3>反馈包</h3><p>把诊断报告、修复历史和设置打包到桌面，方便反馈。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="contribute">
+      <h2>开发建议与投稿</h2>
+      <p>欢迎反馈问题、补充适用场景，或者提交新的修复思路。</p>
+      <div class="grid">
+        <article class="card wide">
+          <h3>建议投稿时附上</h3>
+          <ul>
+            <li>Windows 版本与代理软件名称</li>
+            <li>代理端口、错误提示和复现步骤</li>
+            <li>工具生成的反馈包或 error.log</li>
+          </ul>
+          <div class="links">
+            <a href="https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox/issues/new">GitHub Issues 投稿</a>
+            <a href="https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox">GitHub 仓库</a>
+          </div>
+        </article>
+        <article class="card">
+          <h3>技术反馈 QQ 群</h3>
+          <p><strong>783904560</strong></p>
+          <p>欢迎一起讨论代理、网络、Codex 配置与 Windows 工具开发。</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>Codex 网络修复工具 · 本页面为静态预览页 · MIT License</footer>
+</body>
+</html>
