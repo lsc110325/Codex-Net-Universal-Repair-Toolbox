@@ -920,7 +920,7 @@ namespace CodexNetFix
             btnIntervalPlus.Click += delegate { cfg.MonitorInterval = Math.Min(1800, cfg.MonitorInterval + 15); RefreshInterval(); };
             cardBehave.Controls.Add(btnIntervalMinus); cardBehave.Controls.Add(lblIntervalValue); cardBehave.Controls.Add(btnIntervalPlus);
             Label liquid = MkLabel("主题模式：液态玻璃（敬请期待）", 8.5f, FontStyle.Regular, 18, 246, "hint");
-            liquid.Enabled = false;
+            liquid.ForeColor = pal.TextFaint;
             cardBehave.Controls.Add(liquid);
 
             RoundPanel cardHotkeys = MkCard("快捷键", 0, 462, 386, 136);
@@ -2334,6 +2334,7 @@ namespace CodexNetFix
             author.ForeColor = pal.Text;
             Label note = MakeLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 24, 102, "opt");
             note.AutoSize = false; note.Width = 570; note.Height = 105;
+            note.ForeColor = pal.Text;
             RoundButton sponsor = new RoundButton();
             sponsor.Text = "赞助大大"; sponsor.Primary = true; sponsor.Theme = pal;
             sponsor.Left = 24; sponsor.Top = 220; sponsor.Width = 180; sponsor.Height = 38;
