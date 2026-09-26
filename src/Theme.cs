@@ -140,6 +140,20 @@ namespace CodexNetFix
                 p.Fail = Color.FromArgb(240, 120, 120);
                 p.FailSoft = Color.FromArgb(52, 32, 34);
             }
+            if (accent.Key == "starry")
+            {
+                p.Bg = Color.FromArgb(7, 11, 23);
+                p.Card = Color.FromArgb(15, 23, 42);
+                p.CardAlt = Color.FromArgb(23, 34, 60);
+                p.Edge = Color.FromArgb(45, 62, 104);
+                p.Text = Color.FromArgb(239, 244, 255);
+                p.TextSub = Color.FromArgb(166, 180, 210);
+                p.TextFaint = Color.FromArgb(106, 123, 158);
+                p.Field = Color.FromArgb(20, 30, 52);
+                p.AccentSoft = Color.FromArgb(30, 44, 78);
+                p.Sidebar = Color.FromArgb(10, 16, 31);
+                p.ContentBg = Color.FromArgb(9, 14, 28);
+            }
             return p;
         }
     }

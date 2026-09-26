@@ -349,10 +349,31 @@ namespace CodexNetFix
             }
             else if (accent.Pattern == "stars")
             {
-                g.Clear(Color.FromArgb(12, 16, 31));
-                using (SolidBrush b = new SolidBrush(Color.FromArgb(220, 255, 255, 255)))
-                    for (int x = 12; x < topBar.Width; x += 37)
-                        g.FillEllipse(b, x, 8 + (x % 23) % 10, 2, 2);
+                Rectangle sky = new Rectangle(0, 0, Math.Max(1, topBar.Width), topBar.Height);
+                using (System.Drawing.Drawing2D.LinearGradientBrush bg = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    sky, Color.FromArgb(7, 12, 28), Color.FromArgb(27, 43, 86), 18f))
+                    g.FillRectangle(bg, sky);
+                using (SolidBrush nebula = new SolidBrush(Color.FromArgb(34, 126, 99, 220)))
+                    g.FillEllipse(nebula, topBar.Width / 2 - 150, -36, 300, 92);
+                using (SolidBrush nebula2 = new SolidBrush(Color.FromArgb(26, 50, 162, 220)))
+                    g.FillEllipse(nebula2, topBar.Width - 270, 18, 220, 44);
+                using (SolidBrush star = new SolidBrush(Color.FromArgb(225, 255, 255, 255)))
+                using (SolidBrush dim = new SolidBrush(Color.FromArgb(130, 190, 220, 255)))
+                {
+                    for (int x = 8; x < topBar.Width; x += 31)
+                    {
+                        int y = 7 + (x * 17 % 29);
+                        int size = (x % 3 == 0) ? 2 : 1;
+                        g.FillEllipse(x % 2 == 0 ? star : dim, x, y, size, size);
+                    }
+                }
+                using (Pen glow = new Pen(Color.FromArgb(130, 255, 255, 255), 1f))
+                {
+                    g.DrawLine(glow, 96, 13, 96, 19);
+                    g.DrawLine(glow, 93, 16, 99, 16);
+                    g.DrawLine(glow, topBar.Width - 116, 11, topBar.Width - 116, 17);
+                    g.DrawLine(glow, topBar.Width - 119, 14, topBar.Width - 113, 14);
+                }
             }
 
             // 悬停项：浅色圆角矩形
