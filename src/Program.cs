@@ -1461,13 +1461,13 @@ namespace CodexNetFix
                     else if (tag == "winbtn" || tag == "winclose")
                     {
                         rb.Ghost = false;
-                        rb.NoPaint = true;
+                        rb.NoPaint = false;
                         rb.TransparentPaint = true;
-                        rb.CustomFill = Color.Empty;
+                        rb.CustomFill = Color.FromArgb(44, 255, 255, 255);
                         rb.TextOverride = Color.White;
                         rb.HoverFillColor = rb.Tag != null && rb.Tag.ToString() == "winclose"
                             ? Color.FromArgb(255, 232, 82, 82) : Color.White;
-                        rb.HoverAlpha = rb.Tag != null && rb.Tag.ToString() == "winclose" ? 60 : 34;
+                        rb.HoverAlpha = rb.Tag != null && rb.Tag.ToString() == "winclose" ? 90 : 50;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
                         else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }

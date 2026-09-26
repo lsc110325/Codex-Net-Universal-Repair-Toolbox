@@ -376,6 +376,12 @@ namespace CodexNetFix
             {
                 Draw.Smooth(pevent.Graphics);
                 Rectangle rr0 = new Rectangle(0, 0, Width - 1, Height - 1);
+                if (hover && HoverFillColor != Color.Empty)
+                {
+                    using (GraphicsPath hp = Draw.Rounded(rr0, Radius))
+                    using (SolidBrush hb = new SolidBrush(Color.FromArgb(HoverAlpha, HoverFillColor)))
+                        pevent.Graphics.FillPath(hb, hp);
+                }
                 Color tc0 = TextOverride != Color.Empty ? TextOverride : ForeColor;
                 TextRenderer.DrawText(pevent.Graphics, Text, Font, rr0, tc0, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
                 return;
@@ -399,9 +405,6 @@ namespace CodexNetFix
                     }
                     using (SolidBrush cb2 = new SolidBrush(cf))
                         g.FillPath(cb2, cp2);
-                    if (t.DarkMode)
-                        using (Pen glow = new Pen(Color.FromArgb(90, 255, 255, 255), 2f))
-                            g.DrawPath(glow, cp2);
                 }
                 Color ct = TextOverride != Color.Empty ? TextOverride : Color.White;
                 TextRenderer.DrawText(g, Text, Font, cr, ct, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
