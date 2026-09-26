@@ -214,8 +214,15 @@ namespace CodexNetFix
             Job j = new Job();
             j.Target = target; j.Start = Environment.TickCount; j.Duration = Math.Max(16, durationMs); j.Apply = apply; j.Done = done;
             jobs.Add(j);
-            if (timer == null) { timer = new System.Windows.Forms.Timer(); timer.Interval = 16; timer.Tick += delegate(object s, EventArgs e) { Tick(); }; }
+            if (timer == null) { timer = new System.Windows.Forms.Timer(); timer.Interval = 10; timer.Tick += delegate(object s, EventArgs e) { Tick(); }; }
             if (!timer.Enabled) timer.Start();
+        }
+
+        public static void Cancel(Control target)
+        {
+            for (int i = jobs.Count - 1; i >= 0; i--)
+                if (jobs[i].Target == target) jobs.RemoveAt(i);
+            if (jobs.Count == 0 && timer != null) timer.Stop();
         }
 
         static void Tick()
@@ -237,6 +244,18 @@ namespace CodexNetFix
             if (jobs.Count == 0 && timer != null) timer.Stop();
         }
     }
+    // 无闪烁面板：用于顶部导航动画。
+    public class BufferedPanel : Panel
+    {
+        public BufferedPanel()
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
+                     ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+        }
+    }
+
     // 圆角卡片
     public class RoundPanel : Panel
     {

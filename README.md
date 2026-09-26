@@ -3,7 +3,7 @@
 > 一键修复 **Codex / ChatGPT 桌面版 / Codex CLI / IDE 插件** 在本机无法联网的问题。
 > 自动探测本机代理、注入代理环境变量、修复配置、修复 git，并提供全面自检与一键回滚。
 
-![version](https://img.shields.io/badge/version-v1.0.275-blue)
+![version](https://img.shields.io/badge/version-v1.0.300-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple)
 ![license](https://img.shields.io/badge/license-MIT-green)

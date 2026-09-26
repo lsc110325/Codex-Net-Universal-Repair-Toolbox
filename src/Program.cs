@@ -100,7 +100,7 @@ namespace CodexNetFix
 
         void BuildHeader()
         {
-            topBar = new Panel();
+            topBar = new BufferedPanel();
             topBar.Height = 52; topBar.Tag = "topbar"; topBar.BackColor = pal.DarkMode ? Color.FromArgb(30, 34, 42) : pal.Accent;
 
             PictureBox pic = new PictureBox();
@@ -135,7 +135,6 @@ namespace CodexNetFix
             place(null, EventArgs.Empty);
 
             topBar.Paint += delegate(object s, PaintEventArgs e) { DrawNavPills(e.Graphics); };
-            topBar.MouseDown += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) DragWindow(); };
             titleLabel.MouseDown += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) DragWindow(); };
             AttachDrag(pic); AttachDrag(titleLabel);
             topBar.MouseDown += delegate(object s, MouseEventArgs e)
@@ -206,8 +205,10 @@ namespace CodexNetFix
             if (target == null || topBar == null) return;
             float toX = target.Box.Left, toW = target.Box.Width;
             if (pillX < 0f) { pillX = toX; pillW = toW; return; }
+            if (Math.Abs(pillX - toX) < 0.5f && Math.Abs(pillW - toW) < 0.5f) return;
             float fromX = pillX, fromW = pillW;
-            Anim.Start(topBar, 180, delegate(float e) { pillX = fromX + (toX - fromX) * e; pillW = fromW + (toW - fromW) * e; });
+            Anim.Cancel(topBar);
+            Anim.Start(topBar, 160, delegate(float e) { pillX = fromX + (toX - fromX) * e; pillW = fromW + (toW - fromW) * e; });
         }
 
         NavItem MakeNav(string text, int left, string key)
@@ -1037,12 +1038,10 @@ namespace CodexNetFix
             pageMore.Visible = key == "more";
             pageAbout.Visible = key == "about";
             pageSettings.Visible = key == "settings";
-            if (key == "about") RefreshHistory();
-            StyleTree(content);
-            if (topBar != null) StyleTree(topBar);
+            if (key == "about") { RefreshHistory(); StyleTree(pageAbout); }
             StyleNav();
             AnimatePill();
-            Invalidate(true);
+            if (content != null) content.Invalidate(true);
         }
         void AdjustPageTop(int offset)
         {
