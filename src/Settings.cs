@@ -48,9 +48,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "尝试开发项目官网：功能介绍、开发建议投稿、GitHub 与下载入口",
+                    "由于开发和维护成本过高，官网方案停止，作为弃案保留",
+                    "网站地址（弃案存档）：https://lsc110325.github.io/Codex-Net-Universal-Repair-Toolbox/",
+                    "界面截图已保留：gallery/website-preview.png",
+                    "后续不再继续开发该网站"
+                },
                 new string[] {
                     "更新提示弹窗缩小为轻量卡片，只显示当前版本内容",
                     "更新日志页拆分为“正式版更新”和“测试版更新”",
@@ -148,7 +155,7 @@ namespace CodexNetFix
             {
                 VersionLog v = new VersionLog();
                 v.Version = vers[i];
-                v.Bate = vers[i].StartsWith("v26.9.26.");
+                v.Bate = vers[i].StartsWith("v26.9.");
                 v.Items = items[i];
                 list.Add(v);
             }

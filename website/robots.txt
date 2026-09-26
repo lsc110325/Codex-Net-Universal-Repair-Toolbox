@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://lsc110325.github.io/Codex-Net-Universal-Repair-Toolbox/sitemap.xml

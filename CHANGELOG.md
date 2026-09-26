@@ -2,6 +2,14 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)；`v1.0.100` 之前为公开测试版（bate）。
 
+## v26.9.27.100bate
+
+- 曾尝试开发项目官网，用于功能介绍、开发建议投稿、GitHub 与下载入口
+- 由于开发和维护成本过高，官网方案停止，作为弃案保留
+- 网站地址（弃案存档）：https://lsc110325.github.io/Codex-Net-Universal-Repair-Toolbox/
+- 界面截图已保留：`assets/website-preview.png`
+- 后续不再继续开发该网站
+
 ## v1.0.350
 
 - 更新提示弹窗缩小为 620×430 的轻量卡片，只展示当前版本变更
