@@ -3,7 +3,7 @@
 > 一键修复 **Codex / ChatGPT 桌面版 / Codex CLI / IDE 插件** 在本机无法联网的问题。
 > 自动探测本机代理、注入代理环境变量、修复配置、修复 git，并提供全面自检与一键回滚。
 
-![version](https://img.shields.io/badge/version-v1.0.225-blue)
+![version](https://img.shields.io/badge/version-v1.0.250-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -53,6 +53,7 @@
 - **一键回滚**：改动前自动备份（`*.bak-codexfix-*`），可完整还原（含删除工具新建的文件）
 - **修复历史**：自动记录并合并重复项（`×N`），支持一键清空
 - **更多实用工具**：自动发现并启动代理软件、一键全流程、代理测速、配置快照、反馈包、端口占用与系统时间检查
+- **快捷键自定义**：总开关 + 逐项编辑，支持冲突检测、恢复默认、系统保留组合拦截
 - **界面友好**：PCL 风格现代界面、无边框圆角窗口、四种主题色、托盘常驻、代理健康监控
 - **可脚本化**：完整 CLI 子命令，便于批量部署
 - **零依赖**：单文件 EXE，使用系统自带 .NET Framework 4.8 编译与运行，无需安装、无需管理员权限
@@ -76,6 +77,10 @@
 | 更多工具 |
 |---|
 | ![更多](assets/screenshots/ui-more.png) |
+
+| 快捷键设置 |
+|---|
+| ![快捷键](assets/screenshots/ui-hotkeys.png) |
 
 ---
 
@@ -109,6 +114,10 @@ Codex网络修复工具.exe --cli restore         # 恢复最新配置快照
 Codex网络修复工具.exe --cli feedback        # 生成反馈包
 Codex网络修复工具.exe --cli port 7890       # 端口占用排查
 Codex网络修复工具.exe --cli timesync 7890   # 系统时间检查
+Codex网络修复工具.exe --cli hotkeys         # 查看快捷键设置
+Codex网络修复工具.exe --cli hotkeys-disable # 关闭快捷键
+Codex网络修复工具.exe --cli hotkeys-enable  # 开启快捷键
+Codex网络修复工具.exe --cli hotkeys-reset   # 恢复默认快捷键
 ```
 
 ---

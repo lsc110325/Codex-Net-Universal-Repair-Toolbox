@@ -65,7 +65,8 @@
 | 反馈包 | 将报告、修复历史和设置打包到桌面，便于发送到 QQ 群 783904560 |
 | 端口 / 时间 | 检查端口占用者，并通过 HTTP 代理校验系统时间 |
 
-快捷键：`Ctrl+F` 修复 · `Ctrl+T` 自检 · `Ctrl+R` 重启 · `F5` 刷新 · `Ctrl+M` 更多
+快捷键：`Ctrl+F` 修复 · `Ctrl+T` 自检 · `Ctrl+R` 重启 · `F5` 刷新 · `Ctrl+M` 更多。
+可在【设置 → 快捷键】中逐项修改，也可以用总开关临时关闭；点击“编辑快捷键”后按下组合键即可。
 
 ## 7. 命令行
 
@@ -73,6 +74,7 @@
 --cli version / detect / repair [端口] / check [端口] / e2e / rollback
 --cli restart-list / restart --yes / report [文件] / icon [文件] / preview [文件]
 --cli proxies / speed [端口] / snapshot / restore [文件] / feedback [端口] / port [端口] / timesync [端口]
+--cli hotkeys / hotkeys-enable / hotkeys-disable / hotkeys-reset
 ```
 
 ## 8. 自动化验收

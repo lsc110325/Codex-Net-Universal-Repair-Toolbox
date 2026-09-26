@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace CodexNetFix
 {
@@ -17,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.225";
-        public const string Current = "v1.0.225";
-        public const string Last = "v1.0.200";
+        public const string Num = "1.0.250";
+        public const string Current = "v1.0.250";
+        public const string Last = "v1.0.225";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.0.200";
+        public const string Previous = "v1.0.225";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -35,6 +36,11 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
+                "新增快捷键设置：可逐项修改修复、自检、重启、刷新和更多页快捷键",
+                "新增快捷键总开关，关闭后所有快捷键立即停用且保留原设置",
+                "快捷键编辑器支持恢复默认、冲突检测和 Windows 保留组合拦截",
+                "新增 hotkeys / hotkeys-enable / hotkeys-disable / hotkeys-reset 命令行入口",
+                "版本更新为 v1.0.250",
                 "新增「更多」导航分区，集中提供代理启动、一键全流程、测速和诊断工具",
                 "支持自动发现并启动 Clash、FlClash、v2rayN、iKuuu 等代理软件",
                 "新增配置快照、桌面反馈包、端口占用排查和系统时间检查",
@@ -52,9 +58,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "新增“快捷键”设置卡片和独立编辑窗口，可自定义五个功能按键",
+                    "新增快捷键总开关，关闭后立即停用且保留设置",
+                    "支持恢复默认、重复快捷键检测、系统保留组合拦截",
+                    "新增快捷键命令行管理入口",
+                    "版本更新为 v1.0.250"
+                },
                 new string[] {
                     "新增「更多」分区：代理启动 / 一键全流程 / 测速 / 快照 / 反馈包 / 诊断",
                     "支持自动发现并启动 FlClash、iKuuu、v2rayN、Hiddify 等代理软件",
@@ -127,6 +140,74 @@ namespace CodexNetFix
 }
 
     // 用户设置（持久化到 %APPDATA%\CodexNetFix\settings.json）
+    public static class HotkeyUtil
+    {
+        const Keys ModsMask = Keys.Control | Keys.Alt | Keys.Shift;
+
+        public static bool TryParse(string text, out Keys key)
+        {
+            key = Keys.None;
+            if (string.IsNullOrEmpty(text)) return false;
+            try
+            {
+                KeysConverter conv = new KeysConverter();
+                object obj = conv.ConvertFromString(text.Trim());
+                if (obj == null) return false;
+                key = (Keys)obj;
+                return key != Keys.None;
+            }
+            catch { return false; }
+        }
+
+        public static string Format(Keys key)
+        {
+            Keys code = key & Keys.KeyCode;
+            Keys mods = key & ModsMask;
+            List<string> parts = new List<string>();
+            if ((mods & Keys.Control) != 0) parts.Add("Ctrl");
+            if ((mods & Keys.Alt) != 0) parts.Add("Alt");
+            if ((mods & Keys.Shift) != 0) parts.Add("Shift");
+            try { parts.Add(new KeysConverter().ConvertToString(code)); }
+            catch { parts.Add(code.ToString()); }
+            return string.Join("+", parts.ToArray());
+        }
+
+        public static bool IsValid(Keys key)
+        {
+            Keys code = key & Keys.KeyCode;
+            Keys mods = key & ModsMask;
+            if (code == Keys.None) return false;
+            if (code == Keys.ControlKey || code == Keys.ShiftKey || code == Keys.Menu ||
+                code == Keys.LWin || code == Keys.RWin) return false;
+            if ((key & Keys.LWin) != 0 || (key & Keys.RWin) != 0) return false;
+            bool fn = code >= Keys.F1 && code <= Keys.F12;
+            if (mods == Keys.None) return fn;
+            return true;
+        }
+
+        public static bool IsReserved(Keys key)
+        {
+            Keys k = key & (Keys.KeyCode | ModsMask);
+            if (k == (Keys.Alt | Keys.F4)) return true;
+            if (k == (Keys.Alt | Keys.Tab)) return true;
+            if (k == (Keys.Control | Keys.Escape)) return true;
+            return false;
+        }
+
+        public static bool IsMatch(Keys pressed, string configured)
+        {
+            Keys want;
+            if (!TryParse(configured, out want)) return false;
+            return (pressed & (Keys.KeyCode | ModsMask)) == (want & (Keys.KeyCode | ModsMask));
+        }
+
+        public static bool Same(string a, string b)
+        {
+            Keys ka, kb;
+            return TryParse(a, out ka) && TryParse(b, out kb) && IsMatch(ka, b);
+        }
+    }
+
     public class AppSettings
     {
         public string ThemeMode = "light";     // light / dark
@@ -141,6 +222,12 @@ namespace CodexNetFix
         public bool OptGit = true;
         public bool OptGitExec = true;
         public string LastSeenVersion = "";
+        public bool HotkeysEnabled = true;
+        public string HotkeyRepair = "Ctrl+F";
+        public string HotkeyCheck = "Ctrl+T";
+        public string HotkeyRestart = "Ctrl+R";
+        public string HotkeyRefresh = "F5";
+        public string HotkeyMore = "Ctrl+M";
         public bool SuppressUpdateTip = false;
         public bool EnableAnim = true;   // 界面动画（滑块/胶囊滑动/悬停过渡）
         public bool DomesticDirect = false;   // 国内网络直连（国内站点不走代理）
@@ -179,6 +266,17 @@ namespace CodexNetFix
                 s.EnableAnim = GetBool(t, "enableAnim", s.EnableAnim);
                 s.DomesticDirect = GetBool(t, "domesticDirect", s.DomesticDirect);
                 s.ProxyPath = GetStr(t, "proxyPath", s.ProxyPath);
+                s.HotkeysEnabled = GetBool(t, "hotkeysEnabled", s.HotkeysEnabled);
+                s.HotkeyRepair = GetStr(t, "hotkeyRepair", s.HotkeyRepair);
+                s.HotkeyCheck = GetStr(t, "hotkeyCheck", s.HotkeyCheck);
+                s.HotkeyRestart = GetStr(t, "hotkeyRestart", s.HotkeyRestart);
+                s.HotkeyRefresh = GetStr(t, "hotkeyRefresh", s.HotkeyRefresh);
+                s.HotkeyMore = GetStr(t, "hotkeyMore", s.HotkeyMore);
+                s.HotkeyRepair = SafeHotkey(s.HotkeyRepair, "Ctrl+F");
+                s.HotkeyCheck = SafeHotkey(s.HotkeyCheck, "Ctrl+T");
+                s.HotkeyRestart = SafeHotkey(s.HotkeyRestart, "Ctrl+R");
+                s.HotkeyRefresh = SafeHotkey(s.HotkeyRefresh, "F5");
+                s.HotkeyMore = SafeHotkey(s.HotkeyMore, "Ctrl+M");
             }
             catch { }
             if (s.MonitorInterval < 15) s.MonitorInterval = 15;
@@ -206,11 +304,25 @@ namespace CodexNetFix
                 sb.AppendLine("  \"suppressTip\": " + (SuppressUpdateTip ? "true" : "false") + ",");
                 sb.AppendLine("  \"enableAnim\": " + (EnableAnim ? "true" : "false") + ",");
                 sb.AppendLine("  \"domesticDirect\": " + (DomesticDirect ? "true" : "false") + ",");
-                sb.AppendLine("  \"proxyPath\": \"" + ProxyPath.Replace("\\", "\\\\") + "\"");
+                sb.AppendLine("  \"proxyPath\": \"" + ProxyPath.Replace("\\", "\\\\") + "\",");
+                sb.AppendLine("  \"hotkeysEnabled\": " + (HotkeysEnabled ? "true" : "false") + ",");
+                sb.AppendLine("  \"hotkeyRepair\": \"" + HotkeyRepair + "\",");
+                sb.AppendLine("  \"hotkeyCheck\": \"" + HotkeyCheck + "\",");
+                sb.AppendLine("  \"hotkeyRestart\": \"" + HotkeyRestart + "\",");
+                sb.AppendLine("  \"hotkeyRefresh\": \"" + HotkeyRefresh + "\",");
+                sb.AppendLine("  \"hotkeyMore\": \"" + HotkeyMore + "\"");
                 sb.AppendLine("}");
                 File.WriteAllText(FilePath(), sb.ToString(), new UTF8Encoding(false));
             }
             catch { }
+        }
+
+        static string SafeHotkey(string value, string fallback)
+        {
+            Keys k;
+            if (HotkeyUtil.TryParse(value, out k) && HotkeyUtil.IsValid(k) && !HotkeyUtil.IsReserved(k))
+                return HotkeyUtil.Format(k);
+            return fallback;
         }
 
         static string GetStr(string json, string key, string def)

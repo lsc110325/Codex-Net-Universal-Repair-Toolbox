@@ -31,7 +31,9 @@ namespace CodexNetFix
         Label lblPortHint, lblCheckSum, lblStorePath, lblVersion, lblIntervalValue, lblAccentName;
         RoundButton btnDetect, btnFix, btnRestart, btnRollback, btnClearEnv, btnCheck, btnExport, btnCopy, btnDoc, btnSave, btnOpenDir, btnIntervalMinus, btnIntervalPlus, btnCleanup, btnOpenCodex;
         RoundButton[] swatches;
-        SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec, swAnim, swDomestic, swDark;
+        SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec, swAnim, swDomestic, swDark, swHotkeys;
+        RoundButton btnEditHotkeys;
+        Label lblHotkeysSummary;
         FlowLayoutPanel checkList;
         Label titleLabel, subLabel;
         Label lblSideStatus, lblSideSub, lblSideHome;
@@ -660,7 +662,7 @@ namespace CodexNetFix
             cardLook.Controls.Add(lblAccentName);
             foreach (RoundButton b in swatches) cardLook.Controls.Add(b);
 
-            cardBehave = MkCard("行为", 0, 178, 386, 420);
+            cardBehave = MkCard("行为", 0, 178, 386, 260);
             swStartCheck = MkSwitch("启动时自动自检", 18, 56, cardBehave, 250);
             swMonitor = MkSwitch("后台监控代理健康", 18, 92, cardBehave, 250);
             swTray = MkSwitch("关闭窗口时最小化到托盘", 18, 128, cardBehave, 250);
@@ -674,6 +676,23 @@ namespace CodexNetFix
             btnIntervalPlus.Text = "+"; btnIntervalPlus.Left = 228; btnIntervalPlus.Top = 208; btnIntervalPlus.Width = 34; btnIntervalPlus.Height = 30;
             btnIntervalPlus.Click += delegate { cfg.MonitorInterval = Math.Min(1800, cfg.MonitorInterval + 15); RefreshInterval(); };
             cardBehave.Controls.Add(btnIntervalMinus); cardBehave.Controls.Add(lblIntervalValue); cardBehave.Controls.Add(btnIntervalPlus);
+
+            RoundPanel cardHotkeys = MkCard("快捷键", 0, 454, 386, 144);
+            swHotkeys = MkSwitch("启用快捷键", 18, 54, cardHotkeys, 110);
+            swHotkeys.CheckedChanged += delegate
+            {
+                cfg.HotkeysEnabled = swHotkeys.Checked;
+                cfg.Save();
+                RefreshHotkeySummary();
+                SetStatus(swHotkeys.Checked ? "快捷键已开启" : "快捷键已关闭", pal.Ok);
+            };
+            btnEditHotkeys = new RoundButton();
+            btnEditHotkeys.Text = "编辑快捷键...";
+            btnEditHotkeys.Left = 224; btnEditHotkeys.Top = 48; btnEditHotkeys.Width = 142; btnEditHotkeys.Height = 32;
+            btnEditHotkeys.Click += delegate { DoEditHotkeys(); };
+            lblHotkeysSummary = MkLabel("", 8.5f, FontStyle.Regular, 18, 96, "hint");
+            lblHotkeysSummary.AutoSize = false; lblHotkeysSummary.Width = 350; lblHotkeysSummary.Height = 38;
+            cardHotkeys.Controls.Add(btnEditHotkeys); cardHotkeys.Controls.Add(lblHotkeysSummary);
 
             cardStore = MkCard("升级与存储", 402, 0, 388, 320);
             lblStorePath = MkLabel(AppSettings.FilePath(), 8.5f, FontStyle.Regular, 18, 50, "hint");
@@ -703,7 +722,7 @@ namespace CodexNetFix
             int uy = 50;
             foreach (string s in ups) { cardUpgrade.Controls.Add(MkLabel(s, 9f, FontStyle.Regular, 18, uy, "opt")); uy += 30; }
 
-            pageSettings.Controls.Add(cardLook); pageSettings.Controls.Add(cardBehave);
+            pageSettings.Controls.Add(cardLook); pageSettings.Controls.Add(cardBehave); pageSettings.Controls.Add(cardHotkeys);
             pageSettings.Controls.Add(cardStore); pageSettings.Controls.Add(cardUpgrade);
         }
 
@@ -788,6 +807,7 @@ namespace CodexNetFix
             swStartCheck.Checked = cfg.CheckOnStart; swMonitor.Checked = cfg.Monitor; swTray.Checked = cfg.TrayResident;
             if (swAnim != null) swAnim.Checked = cfg.EnableAnim;
             if (swDomestic != null) swDomestic.Checked = cfg.DomesticDirect;
+            if (swHotkeys != null) { swHotkeys.Checked = cfg.HotkeysEnabled; RefreshHotkeySummary(); }
                         Anim.Enabled = cfg.EnableAnim;
             if (txtPort != null && cfg.LastPort > 0) txtPort.Text = cfg.LastPort.ToString();
             RefreshInterval();
@@ -869,6 +889,7 @@ namespace CodexNetFix
             cfg.CheckOnStart = swStartCheck.Checked; cfg.Monitor = swMonitor.Checked; cfg.TrayResident = swTray.Checked;
             if (swAnim != null) { cfg.EnableAnim = swAnim.Checked; Anim.Enabled = cfg.EnableAnim; }
             if (swDomestic != null) cfg.DomesticDirect = swDomestic.Checked;
+            if (swHotkeys != null) cfg.HotkeysEnabled = swHotkeys.Checked;
             int p; if (int.TryParse(txtPort.Text.Trim(), out p)) cfg.LastPort = p;
             cfg.ThemeMode = "light";
             cfg.AccentKey = accent.Key;
@@ -1587,13 +1608,46 @@ namespace CodexNetFix
             t.IsBackground = true; t.Start();
         }
 
+        void RefreshHotkeySummary()
+        {
+            if (lblHotkeysSummary == null) return;
+            if (!cfg.HotkeysEnabled)
+            {
+                lblHotkeysSummary.Text = "快捷键已关闭；设置会保留，重新开启后立即生效。";
+                return;
+            }
+            lblHotkeysSummary.Text = "修复 " + cfg.HotkeyRepair + "　自检 " + cfg.HotkeyCheck
+                + "　重启 " + cfg.HotkeyRestart + "\n刷新 " + cfg.HotkeyRefresh + "　更多 " + cfg.HotkeyMore;
+        }
+
+        void DoEditHotkeys()
+        {
+            using (HotkeySettingsDialog dlg = new HotkeySettingsDialog(pal, cfg.HotkeyRepair, cfg.HotkeyCheck,
+                cfg.HotkeyRestart, cfg.HotkeyRefresh, cfg.HotkeyMore))
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                cfg.HotkeyRepair = dlg.HotkeyRepair;
+                cfg.HotkeyCheck = dlg.HotkeyCheck;
+                cfg.HotkeyRestart = dlg.HotkeyRestart;
+                cfg.HotkeyRefresh = dlg.HotkeyRefresh;
+                cfg.HotkeyMore = dlg.HotkeyMore;
+                cfg.Save();
+                RefreshHotkeySummary();
+                SetStatus("快捷键设置已保存", pal.Ok);
+                History.Add("快捷键设置", "成功", cfg.HotkeyRepair + " / " + cfg.HotkeyCheck + " / " + cfg.HotkeyRestart);
+            }
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == (Keys.Control | Keys.F)) { ShowPage("repair"); DoRepair(); return true; }
-            if (keyData == (Keys.Control | Keys.T)) { ShowPage("check"); DoCheck(true); return true; }
-            if (keyData == (Keys.Control | Keys.R)) { DoRestart(); return true; }
-            if (keyData == Keys.F5) { ShowPage("repair"); DoDetect(); return true; }
-            if (keyData == (Keys.Control | Keys.M)) { ShowPage("more"); return true; }
+            if (cfg.HotkeysEnabled)
+            {
+                if (HotkeyUtil.IsMatch(keyData, cfg.HotkeyRepair)) { ShowPage("repair"); DoRepair(); return true; }
+                if (HotkeyUtil.IsMatch(keyData, cfg.HotkeyCheck)) { ShowPage("check"); DoCheck(true); return true; }
+                if (HotkeyUtil.IsMatch(keyData, cfg.HotkeyRestart)) { DoRestart(); return true; }
+                if (HotkeyUtil.IsMatch(keyData, cfg.HotkeyRefresh)) { ShowPage("repair"); DoDetect(); return true; }
+                if (HotkeyUtil.IsMatch(keyData, cfg.HotkeyMore)) { ShowPage("more"); return true; }
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
@@ -1761,6 +1815,199 @@ namespace CodexNetFix
         }
     }
     // 多个代理软件时的选择对话框
+    public class HotkeySettingsDialog : Form
+    {
+        Palette pal;
+        RoundButton capturing;
+        string originalText = "";
+        Label status;
+        Dictionary<string, RoundButton> buttons = new Dictionary<string, RoundButton>();
+        public string HotkeyRepair = "Ctrl+F";
+        public string HotkeyCheck = "Ctrl+T";
+        public string HotkeyRestart = "Ctrl+R";
+        public string HotkeyRefresh = "F5";
+        public string HotkeyMore = "Ctrl+M";
+
+        public HotkeySettingsDialog(Palette theme, string repair, string check, string restart, string refresh, string more)
+        {
+            pal = theme;
+            HotkeyRepair = repair; HotkeyCheck = check; HotkeyRestart = restart;
+            HotkeyRefresh = refresh; HotkeyMore = more;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterParent;
+            ClientSize = new Size(560, 380);
+            BackColor = pal.ContentBg;
+            Font = Draw.Ui(9.5f, FontStyle.Regular);
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Panel head = new Panel();
+            head.Left = 0; head.Top = 0; head.Width = ClientSize.Width; head.Height = 46;
+            head.BackColor = pal.Accent;
+            Label title = new Label();
+            title.Text = "快捷键设置";
+            title.Font = Draw.Ui(12f, FontStyle.Bold);
+            title.ForeColor = Color.White; title.BackColor = Color.Transparent;
+            title.AutoSize = true; title.Left = 22; title.Top = 12;
+            RoundButton close = new RoundButton();
+            close.Text = "×"; close.Left = ClientSize.Width - 50; close.Top = 9;
+            close.Width = 34; close.Height = 28; close.Radius = 8;
+            close.Primary = true; close.Theme = pal; close.TextOverride = Color.White;
+            close.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
+            head.Controls.Add(title); head.Controls.Add(close);
+            AttachDrag(head); AttachDrag(title);
+            Controls.Add(head);
+
+            Label hint = new Label();
+            hint.Text = "点击右侧按钮，再按下新的快捷键。推荐使用 Ctrl / Alt / Shift + 字母；无组合键时仅支持 F1-F12。";
+            hint.Font = Draw.Ui(8.7f, FontStyle.Regular); hint.ForeColor = pal.TextSub;
+            hint.AutoSize = false; hint.Left = 22; hint.Top = 54; hint.Width = 516; hint.Height = 32;
+            Controls.Add(hint);
+
+            AddRow("一键修复并部署", "repair", HotkeyRepair, 90);
+            AddRow("打开自检页并执行", "check", HotkeyCheck, 132);
+            AddRow("重启 Codex", "restart", HotkeyRestart, 174);
+            AddRow("重新探测代理端口", "refresh", HotkeyRefresh, 216);
+            AddRow("打开“更多”工具页", "more", HotkeyMore, 258);
+
+            status = new Label();
+            status.Text = "快捷键不可重复，系统保留组合不可使用。";
+            status.Font = Draw.Ui(8.5f, FontStyle.Regular); status.ForeColor = pal.TextFaint;
+            status.AutoSize = false; status.Left = 22; status.Top = 302; status.Width = 516; status.Height = 22;
+            Controls.Add(status);
+
+            RoundButton reset = new RoundButton();
+            reset.Text = "恢复默认"; reset.Left = 22; reset.Top = 328; reset.Width = 112; reset.Height = 34;
+            reset.Theme = pal; reset.Click += delegate { ResetDefaults(); };
+            RoundButton cancel = new RoundButton();
+            cancel.Text = "取消"; cancel.Left = 318; cancel.Top = 328; cancel.Width = 100; cancel.Height = 34;
+            cancel.Theme = pal; cancel.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
+            RoundButton save = new RoundButton();
+            save.Text = "保存"; save.Left = 430; save.Top = 328; save.Width = 108; save.Height = 34;
+            save.Primary = true; save.Theme = pal; save.Click += delegate { SaveValues(); };
+            Controls.Add(reset); Controls.Add(cancel); Controls.Add(save);
+
+            Shown += delegate
+            {
+                using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width, Height), 16))
+                    Region = new Region(gp);
+            };
+        }
+
+        void AddRow(string caption, string key, string value, int y)
+        {
+            Label l = new Label();
+            l.Text = caption; l.Font = Draw.Ui(9.2f, FontStyle.Regular);
+            l.ForeColor = pal.Text; l.AutoSize = false; l.Left = 22; l.Top = y + 7; l.Width = 250; l.Height = 24;
+            RoundButton b = new RoundButton();
+            b.Text = value; b.Left = 318; b.Top = y; b.Width = 220; b.Height = 34;
+            b.Theme = pal;
+            b.Click += delegate { BeginCapture(b); };
+            buttons[key] = b;
+            Controls.Add(l); Controls.Add(b);
+        }
+
+        void BeginCapture(RoundButton b)
+        {
+            if (capturing != null) capturing.Text = originalText;
+            capturing = b; originalText = b.Text; b.Text = "请按快捷键...";
+            status.Text = "正在等待按键，按 Esc 取消本次修改。";
+            status.ForeColor = pal.Accent;
+            b.Focus();
+        }
+
+        void CancelCapture()
+        {
+            if (capturing != null) capturing.Text = originalText;
+            capturing = null; originalText = "";
+            status.Text = "已取消本次修改。"; status.ForeColor = pal.TextFaint;
+        }
+
+        void ResetDefaults()
+        {
+            capturing = null;
+            buttons["repair"].Text = "Ctrl+F"; buttons["check"].Text = "Ctrl+T";
+            buttons["restart"].Text = "Ctrl+R"; buttons["refresh"].Text = "F5"; buttons["more"].Text = "Ctrl+M";
+            status.Text = "已恢复默认快捷键，点击“保存”后生效。"; status.ForeColor = pal.Accent;
+        }
+
+        bool IsDuplicate(string value, string currentKey)
+        {
+            foreach (KeyValuePair<string, RoundButton> kv in buttons)
+                if (kv.Key != currentKey && HotkeyUtil.Same(value, kv.Value.Text)) return true;
+            return false;
+        }
+
+        void SaveValues()
+        {
+            if (capturing != null) { status.Text = "请先按下快捷键或按 Esc 取消当前修改。"; status.ForeColor = pal.Fail; return; }
+            HotkeyRepair = buttons["repair"].Text;
+            HotkeyCheck = buttons["check"].Text;
+            HotkeyRestart = buttons["restart"].Text;
+            HotkeyRefresh = buttons["refresh"].Text;
+            HotkeyMore = buttons["more"].Text;
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (capturing != null)
+            {
+                if (keyData == Keys.Escape) { CancelCapture(); return true; }
+                Keys candidate = keyData & (Keys.KeyCode | Keys.Control | Keys.Alt | Keys.Shift);
+                if (!HotkeyUtil.IsValid(candidate))
+                {
+                    status.Text = "该按键不可用，请使用 Ctrl/Alt/Shift + 字母，或 F1-F12。";
+                    status.ForeColor = pal.Fail;
+                    return true;
+                }
+                if (HotkeyUtil.IsReserved(candidate))
+                {
+                    status.Text = "这是 Windows 保留快捷键，请换一个组合。";
+                    status.ForeColor = pal.Fail;
+                    return true;
+                }
+                string spec = HotkeyUtil.Format(candidate);
+                string currentKey = "";
+                foreach (KeyValuePair<string, RoundButton> kv in buttons) if (kv.Value == capturing) currentKey = kv.Key;
+                if (IsDuplicate(spec, currentKey))
+                {
+                    status.Text = "该快捷键已被其他功能使用，请换一个组合。";
+                    status.ForeColor = pal.Fail;
+                    return true;
+                }
+                capturing.Text = spec; capturing = null; originalText = "";
+                status.Text = "已设置为 " + spec + "，点击“保存”后生效。"; status.ForeColor = pal.Ok;
+                return true;
+            }
+            if (keyData == Keys.Escape) { DialogResult = DialogResult.Cancel; Close(); return true; }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+
+        void AttachDrag(Control c)
+        {
+            c.MouseDown += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Left) return;
+                try { ReleaseCapture(); SendMessage(Handle, 0xA1, 0x2, 0); } catch { }
+            };
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Draw.Smooth(e.Graphics);
+            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width - 1, Height - 1), 16))
+            using (Pen pen = new Pen(Color.FromArgb(40, 0, 0, 0)))
+                e.Graphics.DrawPath(pen, gp);
+        }
+    }
+
     public class ProxyChooser : Form
     {
         public string Chosen = "";
@@ -1859,6 +2106,34 @@ namespace CodexNetFix
             List<string> lg = new List<string>();
 
             if (action == "version") { Console.WriteLine("VERSION=" + AppVersion.Current); return; }
+            if (action == "hotkeys")
+            {
+                AppSettings s = AppSettings.Load();
+                Console.WriteLine("ENABLED=" + (s.HotkeysEnabled ? "true" : "false"));
+                Console.WriteLine("REPAIR=" + s.HotkeyRepair);
+                Console.WriteLine("CHECK=" + s.HotkeyCheck);
+                Console.WriteLine("RESTART=" + s.HotkeyRestart);
+                Console.WriteLine("REFRESH=" + s.HotkeyRefresh);
+                Console.WriteLine("MORE=" + s.HotkeyMore);
+                return;
+            }
+            if (action == "hotkeys-enable" || action == "hotkeys-disable")
+            {
+                AppSettings s = AppSettings.Load();
+                s.HotkeysEnabled = action == "hotkeys-enable";
+                s.Save();
+                Console.WriteLine("ENABLED=" + (s.HotkeysEnabled ? "true" : "false"));
+                return;
+            }
+            if (action == "hotkeys-reset")
+            {
+                AppSettings s = AppSettings.Load();
+                s.HotkeyRepair = "Ctrl+F"; s.HotkeyCheck = "Ctrl+T"; s.HotkeyRestart = "Ctrl+R";
+                s.HotkeyRefresh = "F5"; s.HotkeyMore = "Ctrl+M";
+                s.Save();
+                Console.WriteLine("RESULT=RESET");
+                return;
+            }
 
             if (action == "detect")
             {
