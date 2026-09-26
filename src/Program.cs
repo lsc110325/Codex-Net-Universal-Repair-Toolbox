@@ -42,7 +42,7 @@ namespace CodexNetFix
         public MainForm()
         {
             accent = AccentPreset.Get(cfg.AccentKey);
-            pal = Palette.Create(cfg.ThemeMode == "dark", accent);
+            pal = Palette.Create(false, accent);   // 固定浅色（深色模式已移除）
             FormBorderStyle = FormBorderStyle.None;
             Text = "Codex 网络修复工具";
             Size = new Size(1120, 780);
@@ -249,7 +249,7 @@ namespace CodexNetFix
             int pw = pillW <= 0f ? navRepair.Box.Width : (int)Math.Round(pillW);
             Rectangle pr = new Rectangle(px, navRepair.Box.Top, Math.Max(8, pw - 1), navRepair.Box.Height - 1);
             using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(pr, 8))
-            using (SolidBrush sb = new SolidBrush(pal.DarkMode ? pal.Accent : Color.White))
+            using (SolidBrush sb = new SolidBrush(Color.White))
                 g.FillPath(sb, gp);
 
             // 文字：按滑块覆盖该导航项的比例，从白色渐变到强调色（避免“露馅”）
@@ -258,7 +258,7 @@ namespace CodexNetFix
                 Rectangle tr = new Rectangle(n.Box.Left, n.Box.Top, n.Box.Width, n.Box.Height);
                 int x1 = Math.Max(tr.Left, pr.Left), x2 = Math.Min(tr.Right, pr.Right);
                 float cov = x2 > x1 ? (float)(x2 - x1) / tr.Width : 0f;
-                Color col = pal.DarkMode ? Color.White : ColorUtil.Blend(Color.White, pal.Accent, cov);
+                Color col = ColorUtil.Blend(Color.White, pal.Accent, cov);
                 Font f = n.Box.CaptionFont != null ? n.Box.CaptionFont : Draw.Ui(9.5f, FontStyle.Regular);
                 TextRenderer.DrawText(g, n.Caption, f, tr, col,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
@@ -279,8 +279,8 @@ namespace CodexNetFix
             b.HoverAlpha = 24;   // ≈9% 白，非常柔和
             b.NoPaint = true;           // 背景完全交给顶栏绘制
             b.Ghost = false; b.NoPaint = false;
-            b.CustomFill = pal.DarkMode ? Color.FromArgb(44, 50, 60) : Color.White;
-            b.TextOverride = pal.DarkMode ? Color.FromArgb(225, 230, 238) : pal.Accent;
+            b.CustomFill = Color.White;
+            b.TextOverride = pal.Accent;
             b.HoverFillColor = Color.Empty;
             b.Click += h;
             return b;
@@ -420,7 +420,7 @@ namespace CodexNetFix
             sidebar.Controls.Add(pill); sidebar.Controls.Add(cap);
 
             redPill = new RoundPanel();
-            redPill.Tag = "redpill"; redPill.Radius = 14;   // 完整圆弧（高度 26 的一半以上） redPill.ShowEdge = false;
+            redPill.Tag = "redpill"; redPill.Radius = 13;   // 高度 26 的一半 = 完整胶囊圆角 redPill.ShowEdge = false;
             redPill.Fill = Color.FromArgb(232, 82, 82); redPill.BackColor = redPill.Fill;
             redPill.Left = 168; redPill.Top = 20; redPill.Width = 82; redPill.Height = 26;
             redPill.Cursor = Cursors.Hand;
@@ -555,17 +555,17 @@ namespace CodexNetFix
 
         void BuildSettingsPage()
         {
-            cardLook = MkCard("外观", 0, 0, 386, 200);
+            cardLook = MkCard("辅助色", 0, 0, 386, 162);
             swDark = MkSwitch("深色模式", 18, 50, cardLook, 200);
             swDark.CheckedChanged += delegate { ApplyThemeMode(swDark.Checked); };
             string[] keys = new string[] { "blue", "purple", "yellow", "pink" };
             swatches = new RoundButton[4];
-            for (int i = 0; i < 4; i++) swatches[i] = MkSwatch(keys[i], 22 + i * 54, 96);
-            lblAccentName = MkLabel("当前：" + accent.Name, 9f, FontStyle.Regular, 22, 156, "hint");
+            for (int i = 0; i < 4; i++) swatches[i] = MkSwatch(keys[i], 22 + i * 54, 62);
+            lblAccentName = MkLabel("当前：" + accent.Name, 9f, FontStyle.Regular, 22, 118, "hint");
             cardLook.Controls.Add(lblAccentName);
             foreach (RoundButton b in swatches) cardLook.Controls.Add(b);
 
-            cardBehave = MkCard("行为", 0, 216, 386, 420);
+            cardBehave = MkCard("行为", 0, 178, 386, 420);
             swStartCheck = MkSwitch("启动时自动自检", 18, 56, cardBehave, 250);
             swMonitor = MkSwitch("后台监控代理健康", 18, 92, cardBehave, 250);
             swTray = MkSwitch("关闭窗口时最小化到托盘", 18, 128, cardBehave, 250);
@@ -693,8 +693,7 @@ namespace CodexNetFix
             swStartCheck.Checked = cfg.CheckOnStart; swMonitor.Checked = cfg.Monitor; swTray.Checked = cfg.TrayResident;
             if (swAnim != null) swAnim.Checked = cfg.EnableAnim;
             if (swDomestic != null) swDomestic.Checked = cfg.DomesticDirect;
-            if (swDark != null) swDark.Checked = cfg.ThemeMode == "dark";
-            Anim.Enabled = cfg.EnableAnim;
+                        Anim.Enabled = cfg.EnableAnim;
             if (txtPort != null && cfg.LastPort > 0) txtPort.Text = cfg.LastPort.ToString();
             RefreshInterval();
         }
@@ -789,7 +788,7 @@ namespace CodexNetFix
         {
             accent = AccentPreset.Get(key);
             cfg.AccentKey = key;
-            pal = Palette.Create(cfg.ThemeMode == "dark", accent);
+            pal = Palette.Create(false, accent);   // 固定浅色（深色模式已移除）
             if (lblAccentName != null) lblAccentName.Text = "当前：" + accent.Name;
             if (swatches != null)
                 foreach (RoundButton b in swatches)
@@ -816,7 +815,7 @@ namespace CodexNetFix
 
         void ApplyThemeMode(bool dark)
         {
-            cfg.ThemeMode = dark ? "dark" : "light";
+            cfg.ThemeMode = "light";
             pal = Palette.Create(dark, accent);
             if (topBar != null) topBar.BackColor = dark ? Color.FromArgb(30, 34, 42) : pal.Accent;
             ApplyTheme();
@@ -868,8 +867,8 @@ namespace CodexNetFix
                     else if (tag == "winbtn" || tag == "winclose")
                     {
                         rb.Ghost = false;
-                        rb.CustomFill = pal.DarkMode ? Color.FromArgb(44, 50, 60) : Color.White;
-                        rb.TextOverride = pal.DarkMode ? Color.FromArgb(225, 230, 238) : pal.Accent;
+                        rb.CustomFill = Color.White;
+                        rb.TextOverride = pal.Accent;
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
                         else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }
@@ -905,7 +904,7 @@ namespace CodexNetFix
                     else if (tag == "sidebar") pn.BackColor = Opaque(pal.Sidebar);
                     else if (tag == "content") pn.BackColor = Opaque(pal.ContentBg);
                     else if (tag == "page") pn.BackColor = Opaque(pal.ContentBg);
-                    else if (tag == "topbar") { pn.BackColor = pal.DarkMode ? Color.FromArgb(30, 34, 42) : pal.Accent; }
+                    else if (tag == "topbar") { pn.BackColor = pal.Accent; }
                     else pn.BackColor = Opaque(pal.Bg);
                 }
                 if (c.HasChildren) StyleTree(c);

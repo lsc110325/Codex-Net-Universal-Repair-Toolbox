@@ -143,7 +143,7 @@ namespace CodexNetFix
         {
             GraphicsPath p = new GraphicsPath();
             int d = Math.Max(2, radius * 2);
-            if (r.Width < d || r.Height < d) { p.AddRectangle(r); return p; }
+            int maxD = Math.Min(r.Width, r.Height); if (d > maxD) d = Math.Max(2, maxD);   // 半径过大时自动收敛，保证圆角
             p.AddArc(r.X, r.Y, d, d, 180, 90);
             p.AddArc(r.Right - d, r.Y, d, d, 270, 90);
             p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
