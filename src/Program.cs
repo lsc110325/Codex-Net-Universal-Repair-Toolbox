@@ -555,9 +555,7 @@ namespace CodexNetFix
 
         void BuildSettingsPage()
         {
-            cardLook = MkCard("辅助色", 0, 0, 386, 162);
-            swDark = MkSwitch("深色模式", 18, 50, cardLook, 200);
-            swDark.CheckedChanged += delegate { ApplyThemeMode(swDark.Checked); };
+            cardLook = MkCard("主题色", 0, 0, 386, 162);
             string[] keys = new string[] { "blue", "purple", "yellow", "pink" };
             swatches = new RoundButton[4];
             for (int i = 0; i < 4; i++) swatches[i] = MkSwatch(keys[i], 22 + i * 54, 62);
@@ -774,7 +772,6 @@ namespace CodexNetFix
             cfg.CheckOnStart = swStartCheck.Checked; cfg.Monitor = swMonitor.Checked; cfg.TrayResident = swTray.Checked;
             if (swAnim != null) { cfg.EnableAnim = swAnim.Checked; Anim.Enabled = cfg.EnableAnim; }
             if (swDomestic != null) cfg.DomesticDirect = swDomestic.Checked;
-            if (swDark != null) cfg.ThemeMode = swDark.Checked ? "dark" : "light";
             int p; if (int.TryParse(txtPort.Text.Trim(), out p)) cfg.LastPort = p;
             cfg.ThemeMode = "light";
             cfg.AccentKey = accent.Key;
