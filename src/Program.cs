@@ -830,28 +830,46 @@ namespace CodexNetFix
             }
         }
 
-        void BuildAboutPage()
+        void BuildVersionColumn(RoundPanel card, bool beta)
         {
             FlowLayoutPanel flow = new FlowLayoutPanel();
-            flow.Left = 0; flow.Top = 150; flow.Width = 790; flow.Height = 330;
-            flow.AutoScroll = true; flow.FlowDirection = FlowDirection.LeftToRight; flow.WrapContents = true;
-            flow.Tag = "flowbg"; flow.Name = "versionFlow";
+            flow.Left = 16; flow.Top = 50; flow.Width = card.Width - 32; flow.Height = card.Height - 64;
+            flow.AutoScroll = true; flow.FlowDirection = FlowDirection.TopDown; flow.WrapContents = false;
+            flow.Tag = "flowbg"; flow.Name = beta ? "betaVersionFlow" : "formalVersionFlow";
+            int cardWidth = flow.Width - 24;
             foreach (VersionLog v in AppVersion.All())
-
             {
-                RoundPanel c = MkCard((v.Bate ? "测试版 · " : "正式版 · ") + v.Version, 0, 0, 768, 150);
-                c.Radius = 16;   // 圆角更明显
-                c.Margin = new Padding(0, 0, 0, 12);
-                FillBullets(c, v.Items, 726, 21);
+                if (v.Bate != beta) continue;
+                int cardHeight = Math.Max(112, 56 + v.Items.Length * 23);
+                RoundPanel c = MkCard((beta ? "测试版 · " : "正式版 · ") + v.Version, 0, 0, cardWidth, cardHeight);
+                c.Radius = 14;
+                c.Margin = new Padding(0, 0, 0, 10);
+                FillBullets(c, v.Items, cardWidth - 38, 21);
                 flow.Controls.Add(c);
             }
+            flow.Resize += delegate
+            {
+                int w = Math.Max(160, flow.ClientSize.Width - 8);
+                foreach (Control c in flow.Controls) c.Width = w;
+            };
+            card.Controls.Add(flow);
+        }
+
+        void BuildAboutPage()
+        {
+            RoundPanel formalCard = MkCard("正式版更新", 0, 150, 387, 330);
+            formalCard.Radius = 16;
+            BuildVersionColumn(formalCard, false);
+            RoundPanel betaCard = MkCard("测试版更新", 403, 150, 387, 330);
+            betaCard.Radius = 16;
+            BuildVersionColumn(betaCard, true);
             // 作者有话说：固定钉在更新日志页顶部（不随版本列表滚动）
             RoundPanel authorFixed = MkCard("作者有话说", 0, 0, 790, 138);
             Label noteFixed = MkLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 20, 50, "opt");
             noteFixed.AutoSize = false; noteFixed.Width = 748; noteFixed.Height = 80;
             authorFixed.Controls.Add(noteFixed);
             pageAbout.Controls.Add(authorFixed);
-            pageAbout.Controls.Add(flow);
+            pageAbout.Controls.Add(formalCard); pageAbout.Controls.Add(betaCard);
 
             cardHistory = MkCard("最近修复记录", 0, 492, 790, 150);
             RoundButton clr = new RoundButton();
@@ -1860,35 +1878,36 @@ namespace CodexNetFix
         {
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterParent;
-            Size = new Size(1120, 780);
+            Size = new Size(620, 430);
+            Text = "本次更新 · " + version;
             BackColor = pal.Card;
             Font = Draw.Ui(9.5f, FontStyle.Regular);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
             Label t = new Label();
             t.Text = "本次更新 · " + version;
-            t.Font = Draw.Ui(13f, FontStyle.Bold); t.ForeColor = pal.Text;
-            t.AutoSize = true; t.Left = 28; t.Top = 26;
+            t.Font = Draw.Ui(11.5f, FontStyle.Bold); t.ForeColor = pal.Text;
+            t.AutoSize = true; t.Left = 24; t.Top = 22;
             Label sub = new Label();
             sub.Text = "感谢使用！以下是本次新增与修复内容：";
             sub.Font = Draw.Ui(9f, FontStyle.Regular); sub.ForeColor = pal.TextSub;
-            sub.AutoSize = true; sub.Left = 30; sub.Top = 56;
+            sub.AutoSize = true; sub.Left = 26; sub.Top = 50;
             Controls.Add(t); Controls.Add(sub);
 
-            int y = 92;
+            int y = 84;
             foreach (string line in lines)
             {
                 Label l = new Label();
                 l.Text = "•  " + line;
-                l.Font = Draw.Ui(9.5f, FontStyle.Regular); l.ForeColor = pal.Text;
-                l.AutoSize = false; l.Left = 30; l.Top = y; l.Width = 500; l.Height = 24;
+                l.Font = Draw.Ui(9f, FontStyle.Regular); l.ForeColor = pal.Text;
+                l.AutoSize = false; l.Left = 26; l.Top = y; l.Width = 568; l.Height = 30;
                 Controls.Add(l);
-                y += 26;
+                y += 34;
             }
 
             RoundButton ok = new RoundButton();
             ok.Text = "我知道了"; ok.Primary = true; ok.Theme = pal;
-            ok.Width = 120; ok.Height = 38; ok.Left = Size.Width - 150; ok.Top = Size.Height - 62;
+            ok.Width = 120; ok.Height = 36; ok.Left = Size.Width - 144; ok.Top = Size.Height - 58;
             ok.Click += delegate { Close(); };
             Controls.Add(ok);
 

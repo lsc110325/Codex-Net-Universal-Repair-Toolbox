@@ -48,7 +48,7 @@ codex  chatgpt  openai  proxy  clash  windows  sandbox  network-troubleshooting 
 # 在“开源文件”目录下
 git init
 git add .
-git commit -m "fix: hide console and add window animations v1.0.325"
+git commit -m "feat: split changelog and shrink update popup v1.0.350"
 git branch -M main
 git remote add origin https://github.com/<你的用户名>/Codex-Net-Universal-Repair-Toolbox.git
 git push -u origin main
@@ -58,7 +58,7 @@ git push -u origin main
 
 1. 本地构建：`powershell -ExecutionPolicy Bypass -File src\build.ps1`
 2. 在 GitHub → Releases → Draft a new release
-3. Tag 填 `v1.0.325`，标题填 `v1.0.325`
+3. Tag 填 `v1.0.350`，标题填 `v1.0.350`
 4. 把构建出的 `Codex网络修复工具.exe` 作为附件上传
 5. 说明可直接复制下方模板
 
@@ -67,12 +67,12 @@ git push -u origin main
 ## 6. Release 说明模板
 
 ```markdown
-## v1.0.325
+## v1.0.350
 
 ### 本次更新
-- 改为纯 GUI 子系统，移除后台命令提示符
-- 修复关闭提示符导致软件退出和最小化偶发误关闭
-- 新增打开/最小化/恢复/关闭动画，保持圆角无黑边
+- 更新提示弹窗缩小，只显示当前版本变更
+- 更新日志页拆分为正式版 / 测试版两个独立区域
+- 两个区域分别滚动，历史日志更清晰
 
 ### 下载
 - `Codex网络修复工具.exe`（单文件，免安装）

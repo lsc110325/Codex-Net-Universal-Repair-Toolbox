@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.0.325";
-        public const string Current = "v1.0.325";
-        public const string Last = "v1.0.300";
+        public const string Num = "1.0.350";
+        public const string Current = "v1.0.350";
+        public const string Last = "v1.0.325";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.0.300";
+        public const string Previous = "v1.0.325";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,36 +36,11 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
-                "程序改为纯 Windows GUI 子系统，不再生成后台命令提示符窗口",
-                "新增打开、最小化、恢复和关闭软件的淡入淡出动画",
-                "修复最小化后可能被误关闭的问题，关闭提示符不再影响软件",
-                "动画期间保留圆角窗口区域，避免出现黑色边框",
-                "版本更新为 v1.0.325",
-                "优化导航栏动画：顶部栏启用双缓冲，消除切换闪烁",
-                "提高动画刷新频率并自动取消重叠动画，缓解快速点击时的卡顿",
-                "移除导航点击时误触发的窗口拖动逻辑",
-                "页面切换不再重复遍历全部控件样式，动画更顺滑",
-                "版本更新为 v1.0.300",
-                "修复实用工具“重启 Codex / 一键全流程”误把工具自身当成 Codex 进程的问题",
-                "修复检测到代理软件后无法再手动选择其他 exe 的问题",
-                "代理软件启动时自动设置自身目录为工作目录，提升便携软件兼容性",
-                "重启进程列表会排除当前工具和同路径进程，避免自我关闭",
-                "版本更新为 v1.0.275",
-                "新增快捷键设置：可逐项修改修复、自检、重启、刷新和更多页快捷键",
-                "新增快捷键总开关，关闭后所有快捷键立即停用且保留原设置",
-                "快捷键编辑器支持恢复默认、冲突检测和 Windows 保留组合拦截",
-                "新增 hotkeys / hotkeys-enable / hotkeys-disable / hotkeys-reset 命令行入口",
-                "版本更新为 v1.0.250",
-                "新增「更多」导航分区，集中提供代理启动、一键全流程、测速和诊断工具",
-                "支持自动发现并启动 Clash、FlClash、v2rayN、iKuuu 等代理软件",
-                "新增配置快照、桌面反馈包、端口占用排查和系统时间检查",
-                "新增 Ctrl+F / Ctrl+T / Ctrl+R / F5 / Ctrl+M 快捷键",
-                "新增命令行诊断入口，方便自动化和群友反馈",
-                "修复「最近修复记录」被重复自检刷屏的问题",
-                "历史记录支持连续合并计数（×N）与一键清空",
-                "记录卡片加高、行宽自适应，长文本不再截断",
-                "修复辅助色联动：顶部栏与导航跟随所选配色",
-                "保留全部历史版本日志（200 以前标注 bate）"
+                "更新提示弹窗缩小为轻量卡片，只显示当前版本变更",
+                "更新日志页拆分为正式版和测试版两个独立区域",
+                "正式版 / 测试版版本列表支持独立滚动",
+                "重新整理 200 以前测试版日志显示",
+                "版本更新为 v1.0.350"
             };
         }
 
@@ -73,9 +48,15 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "更新提示弹窗缩小为轻量卡片，只显示当前版本内容",
+                    "更新日志页拆分为“正式版更新”和“测试版更新”",
+                    "两个区域独立滚动，互不影响",
+                    "版本更新为 v1.0.350"
+                },
                 new string[] {
                     "移除后台命令提示符宿主，关闭提示符不再导致软件退出",
                     "新增打开 / 最小化 / 恢复 / 关闭淡入淡出动画",
