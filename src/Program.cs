@@ -1460,8 +1460,16 @@ namespace CodexNetFix
                     else if (tag == "winbtn" || tag == "winclose")
                     {
                         rb.Ghost = false;
-                        rb.CustomFill = Color.White;
-                        rb.TextOverride = pal.Accent;
+                        if (pal.DarkMode)
+                        {
+                            rb.CustomFill = Color.FromArgb(255, 43, 58, 92);
+                            rb.TextOverride = Color.FromArgb(230, 239, 255);
+                        }
+                        else
+                        {
+                            rb.CustomFill = Color.White;
+                            rb.TextOverride = pal.Accent;
+                        }
                         // 悬停：半透明高亮（最小化=极淡白，关闭=淡红）
                         if (rb.Tag != null && rb.Tag.ToString() == "winclose") { rb.HoverFillColor = Color.FromArgb(255, 232, 82, 82); rb.HoverAlpha = 60; }
                         else { rb.HoverFillColor = Color.White; rb.HoverAlpha = 24; }
@@ -2333,6 +2341,7 @@ namespace CodexNetFix
             author.ForeColor = pal.Text;
             Label note = MakeLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 24, 102, "opt");
             note.AutoSize = false; note.Width = 570; note.Height = 105;
+            note.ForeColor = pal.Text;
             RoundButton sponsor = new RoundButton();
             sponsor.Text = "赞助大大"; sponsor.Primary = true; sponsor.Theme = pal;
             sponsor.Left = 24; sponsor.Top = 220; sponsor.Width = 180; sponsor.Height = 38;
