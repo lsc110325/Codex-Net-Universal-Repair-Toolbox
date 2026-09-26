@@ -2333,7 +2333,7 @@ namespace CodexNetFix
             Label note = MakeLabel(AppVersion.AuthorNote(), 9f, FontStyle.Regular, 24, 102, "opt");
             note.AutoSize = false; note.Width = 570; note.Height = 105;
             RoundButton sponsor = new RoundButton();
-            sponsor.Text = "赞助大大的"; sponsor.Primary = true; sponsor.Theme = pal;
+            sponsor.Text = "赞助大大"; sponsor.Primary = true; sponsor.Theme = pal;
             sponsor.Left = 24; sponsor.Top = 220; sponsor.Width = 180; sponsor.Height = 38;
             sponsor.Click += delegate { try { Process.Start("https://afdian.com/a/cnurt"); } catch { } };
 
