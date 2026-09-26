@@ -89,7 +89,7 @@ namespace CodexNetFix
         public Color Bg = Color.FromArgb(255, 255, 255, 255);
         public Color Card = Color.FromArgb(255, 255, 255, 255);
         public Color CardAlt = Color.FromArgb(255, 246, 247, 249);
-        public Color Edge = Color.FromArgb(255, 232, 238, 246);   // 毛玻璃风格：淡蓝白描边
+        public Color Edge = Color.FromArgb(255, 229, 232, 238);
         public Color Text = Color.FromArgb(28, 30, 34);
         public Color TextSub = Color.FromArgb(130, 136, 148);
         public Color TextFaint = Color.FromArgb(168, 174, 186);
@@ -104,8 +104,8 @@ namespace CodexNetFix
         public Color Fail = Color.FromArgb(214, 82, 82);
         public Color FailSoft = Color.FromArgb(255, 238, 238);
         public Color Field = Color.FromArgb(255, 247, 248, 250);
-        public Color Sidebar = Color.FromArgb(255, 247, 249, 252);
-        public Color ContentBg = Color.FromArgb(255, 245, 248, 252);
+        public Color Sidebar = Color.FromArgb(255, 241, 243, 246);
+        public Color ContentBg = Color.FromArgb(255, 247, 249, 252);
 
         public static Palette Create(bool dark, AccentPreset accent)
         {
@@ -242,7 +242,7 @@ namespace CodexNetFix
     {
         public int Radius = 16;
         public Color Fill = Color.White;
-        public Color Edge = Color.FromArgb(255, 232, 238, 246);   // 毛玻璃风格：淡蓝白描边
+        public Color Edge = Color.FromArgb(255, 229, 232, 238);
         public bool ShowEdge = true;
         public string Caption = "";
         public bool NoFill = false;
