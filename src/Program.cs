@@ -453,10 +453,10 @@ namespace CodexNetFix
             btnCleanup.Click += delegate { DoCleanupOld(); };
             btnOpenCodex = new RoundButton();
             btnOpenCodex.Text = "打开 Codex"; btnOpenCodex.Ghost = true;
-            btnOpenCodex.Left = 18; btnOpenCodex.Top = 140; btnOpenCodex.Width = 112; btnOpenCodex.Height = 30;
+            btnOpenCodex.Left = 18; btnOpenCodex.Top = 142; btnOpenCodex.Width = 112; btnOpenCodex.Height = 30;
             btnOpenCodex.Click += delegate { DoOpenCodex(); };            btnDoc = new RoundButton();
             btnDoc.Text = "使用说明"; btnDoc.Ghost = true;
-            btnDoc.Left = 138; btnDoc.Top = 146; btnDoc.Width = 112; btnDoc.Height = 30;
+            btnDoc.Left = 138; btnDoc.Top = 142; btnDoc.Width = 112; btnDoc.Height = 30;
             btnDoc.Click += delegate { OpenDoc(); };
             btns.Controls.Add(btnFix); btns.Controls.Add(btnRestart); btns.Controls.Add(btnRollback);
             btns.Controls.Add(btnCheck); btns.Controls.Add(btnClearEnv); btns.Controls.Add(btnOpenCodex); btns.Controls.Add(btnDoc);
