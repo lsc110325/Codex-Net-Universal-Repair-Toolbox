@@ -1955,6 +1955,7 @@ namespace CodexNetFix
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(560, 380);
+            Text = "快捷键设置";
             BackColor = pal.ContentBg;
             Font = Draw.Ui(9.5f, FontStyle.Regular);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }

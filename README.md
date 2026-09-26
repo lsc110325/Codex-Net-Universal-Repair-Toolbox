@@ -70,10 +70,6 @@
 |---|---|
 | ![设置](assets/screenshots/ui-settings.png) | ![更新日志](assets/screenshots/ui-about.png) |
 
-| 首次启动提示 | 红色更新胶囊 |
-|---|---|
-| ![首启](assets/screenshots/ui-firstrun.png) | ![胶囊](assets/screenshots/ui-pill.png) |
-
 | 更多工具 |
 |---|
 | ![更多](assets/screenshots/ui-more.png) |
