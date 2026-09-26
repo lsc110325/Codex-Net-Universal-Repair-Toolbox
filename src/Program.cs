@@ -2347,9 +2347,10 @@ namespace CodexNetFix
             repo.Left = 420; repo.Top = 270; repo.Width = 174; repo.Height = 34;
             repo.Click += delegate { try { Process.Start("https://github.com/lsc110325/Codex-Net-Universal-Repair-Toolbox"); } catch { } };
             Panel divider = new Panel();
-            divider.Left = 24; divider.Top = 330; divider.Width = 570; divider.Height = 2; divider.BackColor = pal.Accent;
+            divider.Left = 24; divider.Top = 330; divider.Width = 570; divider.Height = 2;
+            divider.BackColor = pal.DarkMode ? Color.FromArgb(120, 156, 190, 255) : pal.Accent;
             Label thanks = MakeLabel("鸣谢", 11f, FontStyle.Bold, 24, 350, "opt");
-            thanks.ForeColor = pal.Accent;
+            thanks.ForeColor = pal.DarkMode ? Color.FromArgb(156, 190, 255) : pal.Accent;
             Label thanksSub = MakeLabel("感谢每一位提供反馈、建议和支持的朋友。", 8.7f, FontStyle.Regular, 24, 378, "hint");
             thanksSub.ForeColor = pal.TextSub;
 
@@ -2795,7 +2796,7 @@ namespace CodexNetFix
             if (capturing != null) capturing.Text = originalText;
             capturing = b; originalText = b.Text; b.Text = "请按快捷键...";
             status.Text = "正在等待按键，按 Esc 取消本次修改。";
-            status.ForeColor = pal.Accent;
+            status.ForeColor = pal.DarkMode ? Color.FromArgb(156, 190, 255) : pal.Accent;
             b.Focus();
         }
 
@@ -2811,7 +2812,8 @@ namespace CodexNetFix
             capturing = null;
             buttons["repair"].Text = "Ctrl+F"; buttons["check"].Text = "Ctrl+T";
             buttons["restart"].Text = "Ctrl+R"; buttons["refresh"].Text = "F5"; buttons["more"].Text = "Ctrl+M";
-            status.Text = "已恢复默认快捷键，点击“保存”后生效。"; status.ForeColor = pal.Accent;
+            status.Text = "已恢复默认快捷键，点击“保存”后生效。";
+            status.ForeColor = pal.DarkMode ? Color.FromArgb(156, 190, 255) : pal.Accent;
         }
 
         bool IsDuplicate(string value, string currentKey)
