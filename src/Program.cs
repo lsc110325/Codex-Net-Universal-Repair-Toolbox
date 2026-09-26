@@ -425,6 +425,7 @@ namespace CodexNetFix
             b.Font = Draw.Ui(9f, FontStyle.Regular);
             // 纯图标按钮：默认无背景，悬停时半透明高亮
             b.Ghost = true;
+            b.TransparentPaint = true;
             b.CustomFill = Color.Empty;
             b.TextOverride = Color.White;
             b.HoverFillColor = Color.White;
@@ -1460,13 +1461,25 @@ namespace CodexNetFix
                     else if (tag == "winbtn" || tag == "winclose")
                     {
                         rb.Ghost = false;
-                        if (pal.DarkMode)
+                        if (accent.Pattern.Length > 0)
                         {
+                            rb.NoPaint = true;
+                            rb.TransparentPaint = true;
+                            rb.CustomFill = Color.Empty;
+                            rb.TextOverride = Color.White;
+                            rb.HoverFillColor = rb.Tag != null && rb.Tag.ToString() == "winclose"
+                                ? Color.FromArgb(255, 232, 82, 82) : Color.White;
+                            rb.HoverAlpha = rb.Tag != null && rb.Tag.ToString() == "winclose" ? 60 : 34;
+                        }
+                        else if (pal.DarkMode)
+                        {
+                            rb.NoPaint = false;
                             rb.CustomFill = Color.FromArgb(255, 43, 58, 92);
                             rb.TextOverride = Color.FromArgb(230, 239, 255);
                         }
                         else
                         {
+                            rb.NoPaint = false;
                             rb.CustomFill = Color.White;
                             rb.TextOverride = pal.Accent;
                         }
