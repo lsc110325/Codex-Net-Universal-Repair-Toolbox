@@ -30,6 +30,7 @@ namespace CodexNetFix
         public bool PatchCodexHome = true;   // config.toml + .env
         public bool PatchGitTls = true;      // git http.sslBackend=openssl
         public bool PatchGitExecPath = true; // config.toml 写 GIT_EXEC_PATH
+        public bool DomesticDirect = false;  // 国内域名直连（不走代理）
     }
 
     public static class Core
@@ -380,22 +381,64 @@ namespace CodexNetFix
         }
 
         // ---------- 修复 ----------
-        public static Dictionary<string, string> ProxyEnvMap(int port)
+        public static Dictionary<string, string> ProxyEnvMap(int port, bool domesticDirect)
         {
             string url = "http://127.0.0.1:" + port;
             Dictionary<string, string> d = new Dictionary<string, string>();
             d["HTTP_PROXY"] = url;
             d["HTTPS_PROXY"] = url;
             d["ALL_PROXY"] = url;
-            d["NO_PROXY"] = "localhost,127.0.0.1,::1";
+            d["NO_PROXY"] = NoProxyValue(domesticDirect);
             d["http_proxy"] = url;
             d["https_proxy"] = url;
             d["all_proxy"] = url;
-            d["no_proxy"] = "localhost,127.0.0.1,::1";
+            d["no_proxy"] = NoProxyValue(domesticDirect);
             d["NODE_USE_ENV_PROXY"] = "1";
             return d;
         }
 
+        // 国内常用域名（开启"国内直连"时写入 NO_PROXY，使这些域名绕过代理）
+        static readonly string[] CnDomains = new string[] {
+            ".cn", "baidu.com", "qq.com", "tencent.com", "taobao.com", "tmall.com", "alicdn.com", "aliyun.com",
+            "jd.com", "bilibili.com", "163.com", "126.net", "sohu.com", "sina.com.cn", "weibo.com", "zhihu.com",
+            "csdn.net", "gitee.com", "jianshu.com", "cnblogs.com", "douyin.com", "kuaishou.com", "mi.com",
+            "huawei.com", "xiaomi.com", "360.cn", "sogou.com", "qcloud.com", "volces.com", "bytedance.com"
+        };
+
+        public static string NoProxyValue(bool domesticDirect)
+        {
+            string basic = "localhost,127.0.0.1,::1";
+            if (!domesticDirect) return basic;
+            return basic + "," + string.Join(",", CnDomains);
+        }
+
+        // 打开 Codex 桌面应用（不结束任何进程）
+        public static string OpenCodex(List<string> log)
+        {
+            foreach (ProcInfo p in CodexProcesses())
+            {
+                if (p.Path.Length > 0 && p.Name.ToLower().IndexOf("chatgpt") >= 0)
+                {
+                    try { Process.Start(p.Path); if (log != null) log.Add("  ✓ 已启动 " + p.Path); return "OK"; }
+                    catch (Exception ex) { if (log != null) log.Add("  ✗ 启动失败: " + ex.Message); }
+                }
+            }
+            string cli = FindCodexExe();
+            if (cli.Length > 0)
+            {
+                try
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo(cli, "app");
+                    psi.UseShellExecute = false;
+                    Process.Start(psi);
+                    if (log != null) log.Add("  ✓ 已通过 Codex CLI 启动桌面应用");
+                    return "OK";
+                }
+                catch (Exception ex) { if (log != null) log.Add("  ✗ 启动失败: " + ex.Message); }
+            }
+            if (log != null) log.Add("  ✗ 未找到 Codex 可执行文件，请手动打开");
+            return "FAIL";
+        }
         public static int Repair(RepairOptions opt, List<string> log)
         {
             int port = opt.Port;
@@ -430,7 +473,7 @@ namespace CodexNetFix
             {
                 log.Add("[2/6] 写入 " + cfg);
                 Dictionary<string, string> envKeys = new Dictionary<string, string>();
-                foreach (KeyValuePair<string, string> kv in ProxyEnvMap(port)) envKeys[kv.Key] = "\"" + kv.Value + "\"";
+                foreach (KeyValuePair<string, string> kv in ProxyEnvMap(port, opt.DomesticDirect)) envKeys[kv.Key] = "\"" + kv.Value + "\"";
                 if (opt.PatchGitExecPath && gitExec.Length > 0) envKeys["GIT_EXEC_PATH"] = "'" + gitExec + "'";
                 TomlSetKeys(cfg, "shell_environment_policy.set", envKeys, log, true);
                 Dictionary<string, string> sandboxKeys = new Dictionary<string, string>();
@@ -443,7 +486,7 @@ namespace CodexNetFix
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine("# Codex 网络修复工具自动生成 - " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                 sb.AppendLine("# 修改后请重启 Codex 使其生效");
-                foreach (KeyValuePair<string, string> kv in ProxyEnvMap(port)) sb.AppendLine(kv.Key + "=" + kv.Value);
+                foreach (KeyValuePair<string, string> kv in ProxyEnvMap(port, opt.DomesticDirect)) sb.AppendLine(kv.Key + "=" + kv.Value);
                 if (opt.PatchGitExecPath && gitExec.Length > 0) sb.AppendLine("GIT_EXEC_PATH=" + gitExec);
                 try
                 {

@@ -29,9 +29,9 @@ namespace CodexNetFix
         RoundPanel cardPort, cardOptions, cardActions, cardLog, cardCheckList, cardLook, cardBehave, cardStore, cardLogNow, cardLogPrev, cardHistory;
         TextBox txtPort, logBox;
         Label lblPortHint, lblCheckSum, lblStorePath, lblVersion, lblIntervalValue, lblAccentName;
-        RoundButton btnDetect, btnFix, btnRestart, btnRollback, btnClearEnv, btnCheck, btnExport, btnCopy, btnDoc, btnSave, btnOpenDir, btnIntervalMinus, btnIntervalPlus, btnCleanup;
+        RoundButton btnDetect, btnFix, btnRestart, btnRollback, btnClearEnv, btnCheck, btnExport, btnCopy, btnDoc, btnSave, btnOpenDir, btnIntervalMinus, btnIntervalPlus, btnCleanup, btnOpenCodex;
         RoundButton[] swatches;
-        SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec, swAnim;
+        SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec, swAnim, swDomestic;
         FlowLayoutPanel checkList;
         Label titleLabel, subLabel;
         Label lblSideStatus, lblSideSub, lblSideHome;
@@ -441,12 +441,15 @@ namespace CodexNetFix
             btnCleanup.Text = "清理旧版本"; btnCleanup.Ghost = true;
             btnCleanup.Left = 18; btnCleanup.Top = 146; btnCleanup.Width = 112; btnCleanup.Height = 30;
             btnCleanup.Click += delegate { DoCleanupOld(); };
-            btnDoc = new RoundButton();
+            btnOpenCodex = new RoundButton();
+            btnOpenCodex.Text = "打开 Codex"; btnOpenCodex.Ghost = true;
+            btnOpenCodex.Left = 18; btnOpenCodex.Top = 140; btnOpenCodex.Width = 112; btnOpenCodex.Height = 30;
+            btnOpenCodex.Click += delegate { DoOpenCodex(); };            btnDoc = new RoundButton();
             btnDoc.Text = "使用说明"; btnDoc.Ghost = true;
             btnDoc.Left = 138; btnDoc.Top = 146; btnDoc.Width = 112; btnDoc.Height = 30;
             btnDoc.Click += delegate { OpenDoc(); };
             btns.Controls.Add(btnFix); btns.Controls.Add(btnRestart); btns.Controls.Add(btnRollback);
-            btns.Controls.Add(btnCheck); btns.Controls.Add(btnClearEnv); btns.Controls.Add(btnCleanup); btns.Controls.Add(btnDoc);
+            btns.Controls.Add(btnCheck); btns.Controls.Add(btnClearEnv); btns.Controls.Add(btnOpenCodex); btns.Controls.Add(btnDoc);
             AttachDrag(sidebar); AttachDrag(cap); AttachDrag(lblSideStatus); AttachDrag(lblSideSub);
             sidebar.Controls.Add(btns);
 
@@ -480,13 +483,14 @@ namespace CodexNetFix
             lblPortHint = MkLabel("留空即自动探测", 8.5f, FontStyle.Regular, 16, 86, "hint");
             cardPort.Controls.Add(wrap); cardPort.Controls.Add(btnDetect); cardPort.Controls.Add(lblPortHint);
 
-            cardOptions = MkCard("修复选项", 0, 124, 380, 186);
+            cardOptions = MkCard("修复选项", 0, 124, 380, 216);
             swCodex = MkSwitch("修复 Codex 配置", 16, 54, cardOptions, 300);
             swUserEnv = MkSwitch("写入用户环境变量", 16, 84, cardOptions, 300);
             swGit = MkSwitch("修复 git TLS 后端", 16, 114, cardOptions, 300);
             swGitExec = MkSwitch("注入 GIT_EXEC_PATH", 16, 144, cardOptions, 300);
+            swDomestic = MkSwitch("国内网络直连（国内站点不走代理）", 16, 174, cardOptions, 300);
 
-            RoundPanel cardSteps = MkCard("使用步骤", 0, 326, 380, 272);
+            RoundPanel cardSteps = MkCard("使用步骤", 0, 356, 380, 242);
             string[] steps = new string[] { "① 启动代理软件（Clash / iKuuu 等）", "② 点左侧【一键修复并部署】", "③ 点【重启 Codex】", "④ 点【全面自检】确认全部 OK", "", "提示：自检失败多是代理节点掉线，", "换个节点重新自检即可。" };
             int sy = 48;
             foreach (string s in steps) { cardSteps.Controls.Add(MkLabel(s, 9f, FontStyle.Regular, 18, sy, "opt")); sy += 26; }
@@ -676,6 +680,7 @@ namespace CodexNetFix
             swGit.Checked = cfg.OptGit; swGitExec.Checked = cfg.OptGitExec;
             swStartCheck.Checked = cfg.CheckOnStart; swMonitor.Checked = cfg.Monitor; swTray.Checked = cfg.TrayResident;
             if (swAnim != null) swAnim.Checked = cfg.EnableAnim;
+            if (swDomestic != null) swDomestic.Checked = cfg.DomesticDirect;
             Anim.Enabled = cfg.EnableAnim;
             if (txtPort != null && cfg.LastPort > 0) txtPort.Text = cfg.LastPort.ToString();
             RefreshInterval();
@@ -756,6 +761,7 @@ namespace CodexNetFix
             cfg.OptGit = swGit.Checked; cfg.OptGitExec = swGitExec.Checked;
             cfg.CheckOnStart = swStartCheck.Checked; cfg.Monitor = swMonitor.Checked; cfg.TrayResident = swTray.Checked;
             if (swAnim != null) { cfg.EnableAnim = swAnim.Checked; Anim.Enabled = cfg.EnableAnim; }
+            if (swDomestic != null) cfg.DomesticDirect = swDomestic.Checked;
             int p; if (int.TryParse(txtPort.Text.Trim(), out p)) cfg.LastPort = p;
             cfg.ThemeMode = "light";
             cfg.AccentKey = accent.Key;
@@ -984,6 +990,7 @@ namespace CodexNetFix
             o.WriteUserEnvVars = swUserEnv.Checked;
             o.PatchGitTls = swGit.Checked;
             o.PatchGitExecPath = swGitExec.Checked;
+            o.DomesticDirect = swDomestic != null && swDomestic.Checked;
             runLog.Clear(); if (logBox != null) logBox.Clear();
             SetStatus("正在修复…", pal.Warn);
             btnFix.Enabled = false;
@@ -1106,6 +1113,23 @@ namespace CodexNetFix
             foreach (string l in lg) AppendLog(l);
             SetStatus("已清除用户级代理环境变量。", pal.Ok);
             History.Add("清除环境变量", "完成", "");
+        }
+
+        void DoOpenCodex()
+        {
+            SetStatus("正在打开 Codex…", pal.Warn);
+            Thread t = new Thread(delegate ()
+            {
+                List<string> lg = new List<string>();
+                string r = Core.OpenCodex(lg);
+                BeginInvoke(new Action(delegate
+                {
+                    foreach (string l in lg) AppendLog(l);
+                    SetStatus(r == "OK" ? "Codex 已打开" : "未能自动打开，请手动启动 Codex", r == "OK" ? pal.Ok : pal.Warn);
+                    History.Add("打开 Codex", r == "OK" ? "成功" : "失败", "");
+                }));
+            });
+            t.IsBackground = true; t.Start();
         }
 
         void DoRestart()
@@ -1386,6 +1410,7 @@ namespace CodexNetFix
             {
                 RepairOptions o = new RepairOptions();
                 if (args.Length > 2) { int p; if (int.TryParse(args[2], out p)) o.Port = p; }
+                foreach (string a2 in args) if (a2 == "--domestic") o.DomesticDirect = true;   // 国内直连分流
                 int used = Core.Repair(o, lg);
                 foreach (string l in lg) Console.WriteLine(l);
                 Console.WriteLine("RESULT=" + (used > 0 ? "OK:" + used : "FAILED"));
