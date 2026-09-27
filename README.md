@@ -7,6 +7,7 @@
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple)
 ![license](https://img.shields.io/badge/license-MIT-green)
+[![赞助](https://img.shields.io/badge/%E8%B5%9E%E5%8A%A9-%E7%88%B1%E5%8F%91%E7%94%B5-ff69b4)](https://afdian.com/a/cnurt)
 
 ---
 
@@ -231,6 +232,14 @@ powershell -ExecutionPolicy Bypass -File tools\stress-test.ps1
 > 由于高中学业紧张、住宿半月放假，来不及回复消息，大家可以加入**技术反馈 QQ 群：783904560** 共同探讨与反馈问题。
 
 ---
+## 赞助支持
+
+如果这个工具帮到了你，可以前往爱发电支持我，感谢支持！
+
+[前往爱发电赞助](https://afdian.com/a/cnurt)
+
+---
+
 ## 贡献与许可
 
 - 欢迎提交 Issue / PR，请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)

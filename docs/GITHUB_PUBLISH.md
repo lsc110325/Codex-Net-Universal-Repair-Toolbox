@@ -41,6 +41,7 @@ codex  chatgpt  openai  proxy  clash  windows  sandbox  network-troubleshooting 
 - 现代简约风格界面、无边框圆角窗口、四种主题色、托盘常驻、代理健康监控、修复历史
 - 更多工具：启动代理软件、一键全流程、代理测速、配置快照、反馈包、端口与时间诊断
 - 完整 CLI，可脚本化批量部署
+- 爱发电赞助：https://afdian.com/a/cnurt
 
 ## 5. 首次发布步骤
 
