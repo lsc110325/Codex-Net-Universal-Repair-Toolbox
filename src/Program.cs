@@ -2360,11 +2360,15 @@ namespace CodexNetFix
         {
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterParent;
-            Size = new Size(620, 430);
+            Size = new Size(620, 480);
             Text = "本次更新 · " + version;
             BackColor = pal.Card;
             Font = Draw.Ui(9.5f, FontStyle.Regular);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Panel scroll = new Panel();
+            scroll.Left = 0; scroll.Top = 0; scroll.Width = ClientSize.Width; scroll.Height = ClientSize.Height - 64;
+            scroll.AutoScroll = true; scroll.BackColor = pal.Card;
 
             Label t = new Label();
             t.Text = "本次更新 · " + version;
@@ -2374,7 +2378,7 @@ namespace CodexNetFix
             sub.Text = "感谢使用！以下是本次新增与修复内容：";
             sub.Font = Draw.Ui(9f, FontStyle.Regular); sub.ForeColor = pal.TextSub;
             sub.AutoSize = true; sub.Left = 26; sub.Top = 50;
-            Controls.Add(t); Controls.Add(sub);
+            scroll.Controls.Add(t); scroll.Controls.Add(sub);
 
             int y = 84;
             foreach (string line in lines)
@@ -2383,15 +2387,18 @@ namespace CodexNetFix
                 l.Text = "•  " + line;
                 l.Font = Draw.Ui(9f, FontStyle.Regular); l.ForeColor = pal.Text;
                 l.AutoSize = false; l.Left = 26; l.Top = y; l.Width = 568; l.Height = 30;
-                Controls.Add(l);
+                scroll.Controls.Add(l);
                 y += 34;
             }
+            scroll.AutoScrollMinSize = new Size(0, y + 14);
+            Controls.Add(scroll);
 
             RoundButton ok = new RoundButton();
             ok.Text = "我知道了"; ok.Primary = true; ok.Theme = pal;
-            ok.Width = 120; ok.Height = 36; ok.Left = Size.Width - 144; ok.Top = Size.Height - 58;
+            ok.Width = 120; ok.Height = 36; ok.Left = ClientSize.Width - 144; ok.Top = ClientSize.Height - 54;
             ok.Click += delegate { Close(); };
             Controls.Add(ok);
+            ok.BringToFront();
 
             MouseDown += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) { ReleaseCapture(); SendMessage(Handle, 0xA1, 0x2, 0); } };
             Shown += delegate
