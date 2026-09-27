@@ -43,7 +43,7 @@ namespace CodexNetFix
         RoundPanel cardSideStatus;
         Panel topBar, sidebar, contentHost, bodyPanel, bottomBar;
         RoundButton btnLaunchProxy, btnAllInOne, btnSpeed, btnPack, btnSnap, btnRestore, btnPortQ, btnTimeQ;
-        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor, btnToggleTokenChart;
+        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor, btnToggleTokenChart, btnProjectTree, btnErrorCleaner;
         SwitchBox swTokenWarn;
         Label lblTokenToday, lblTokenWeek, lblTokenLimit, lblTokenWarnStatus;
         TokenStatsChart tokenChart;
@@ -790,9 +790,12 @@ namespace CodexNetFix
             btnTokenSpeed = MkAction("代理测速", 538, 54, 234, delegate { DoTokenSpeed(); });
             btnTokenMonitor = MkAction("开始网络监测", 18, 112, 240, delegate { ToggleTokenMonitor(); });
             btnDebugKey = MkAction("输入调试码", 278, 112, 240, delegate { DoDebugKey(); });
-            Label tip = MkLabel("Token 统计来自本机 Codex sessions 日志，按会话最后写入日期估算。", 8.5f, FontStyle.Regular, 18, 180, "hint");
+            btnProjectTree = MkAction("生成项目目录树", 538, 112, 234, delegate { DoProjectTree(); });
+            btnErrorCleaner = MkAction("精简剪贴板报错", 18, 170, 240, delegate { DoCleanClipboardError(); });
+            Label tip = MkLabel("Token 统计来自本机 Codex sessions 日志，按会话最后写入日期估算。", 8.5f, FontStyle.Regular, 18, 216, "hint");
             cardTools.Controls.Add(btnPonytail); cardTools.Controls.Add(btnTokenGuide); cardTools.Controls.Add(btnTokenSpeed);
-            cardTools.Controls.Add(btnTokenMonitor); cardTools.Controls.Add(btnDebugKey); cardTools.Controls.Add(tip);
+            cardTools.Controls.Add(btnTokenMonitor); cardTools.Controls.Add(btnDebugKey); cardTools.Controls.Add(btnProjectTree);
+            cardTools.Controls.Add(btnErrorCleaner); cardTools.Controls.Add(tip);
 
             pageToken.Controls.Add(cardChart); pageToken.Controls.Add(cardWarn); pageToken.Controls.Add(cardTools);
             lblTokenToday.Text = "打开 Token 优化分区后开始统计";
@@ -1306,6 +1309,55 @@ namespace CodexNetFix
                 }));
             });
             t.IsBackground = true; t.Start();
+        }
+
+        void DoProjectTree()
+        {
+            FolderBrowserDialog f = new FolderBrowserDialog();
+            f.Description = "选择要生成目录树的项目文件夹";
+            if (f.ShowDialog(this) != DialogResult.OK) return;
+            string tree = Core.GenerateDirectoryTree(f.SelectedPath, 4);
+            if (tree.Length == 0)
+            {
+                MessageBox.Show("目录为空或无法读取。", "项目目录树", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            try
+            {
+                string file = Path.Combine(Core.OutputRoot(), "项目目录树-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".md");
+                File.WriteAllText(file, tree, new UTF8Encoding(false));
+                Clipboard.SetText(tree);
+                SetStatus("目录树已生成并复制到剪贴板", pal.Ok);
+                History.Add("项目目录树", "成功", f.SelectedPath);
+                MessageBox.Show("目录树已复制到剪贴板，并保存到：\r\n" + file, "项目目录树", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                SetStatus("目录树生成失败: " + ex.Message, pal.Fail);
+            }
+        }
+
+        void DoCleanClipboardError()
+        {
+            try
+            {
+                string raw = Clipboard.GetText();
+                if (string.IsNullOrEmpty(raw))
+                {
+                    MessageBox.Show("剪贴板里没有文本。", "报错精简", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                string clean = Core.CleanErrorText(raw);
+                if (clean.Length == 0) clean = raw;
+                Clipboard.SetText(clean);
+                SetStatus("报错已精简并复制到剪贴板", pal.Ok);
+                History.Add("精简报错", "成功", "已处理剪贴板文本");
+                MessageBox.Show(clean, "已精简报错（可粘贴给 Codex）", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                SetStatus("报错精简失败: " + ex.Message, pal.Fail);
+            }
         }
 
         void CopyTokenGuide()

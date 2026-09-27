@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.1.175";
-        public const string Current = "v1.1.175";
-        public const string Last = "v1.1.150";
+        public const string Num = "1.1.200";
+        public const string Current = "v1.1.200";
+        public const string Last = "v1.1.175";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.1.150";
+        public const string Previous = "v1.1.175";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,6 +36,12 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
+                "新增项目目录树生成器，忽略大目录并自动复制到剪贴板",
+                "新增剪贴板报错精简器，去掉时间戳、颜色码、重复行和长路径",
+                "新增生成文件与安全缓存存储目录选择",
+                "新增 Codex 临时缓存清理和安全缓存迁移",
+                "配置串流暂不自动启用，避免误改配置",
+                "版本更新为 v1.1.200",
                 "Token 统计改为后台加载并缓存，降低进入 Token 页面时的卡顿",
                 "新增“隐藏 / 显示 7 日图”按钮，可选择暂时隐藏柱状图",
                 "更多页新增“关于与鸣谢”，作者有话说已迁入独立可滚动窗口",
@@ -49,9 +55,16 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.1.175", "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.1.200", "v1.1.175", "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "新增项目目录树生成器，忽略大目录并自动复制",
+                    "新增剪贴板报错精简器",
+                    "新增生成文件与安全缓存存储目录选择",
+                    "新增 Codex 临时缓存清理和安全缓存迁移",
+                    "版本更新为 v1.1.200"
+                },
                 new string[] {
                     "Token 统计改为后台加载并缓存，进入页面更流畅",
                     "新增隐藏 / 显示 7 日图按钮",

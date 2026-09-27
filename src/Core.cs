@@ -1040,6 +1040,63 @@ namespace CodexNetFix
             return "已清理 " + cleaned + " 个缓存目录，释放约 " + Math.Round(total / 1048576.0, 1) + " MB";
         }
 
+        static void AppendTree(StringBuilder sb, string dir, string prefix, int depth, int maxDepth, HashSet<string> ignore)
+        {
+            if (depth > maxDepth) return;
+            string[] dirs;
+            string[] files;
+            try { dirs = Directory.GetDirectories(dir); files = Directory.GetFiles(dir); }
+            catch { return; }
+            Array.Sort(dirs); Array.Sort(files);
+            for (int i = 0; i < dirs.Length; i++)
+            {
+                string name = Path.GetFileName(dirs[i]);
+                if (ignore.Contains(name.ToLower())) continue;
+                bool last = (i == dirs.Length - 1 && files.Length == 0);
+                sb.AppendLine(prefix + (last ? "└─ " : "├─ ") + name + "/");
+                AppendTree(sb, dirs[i], prefix + (last ? "   " : "│  "), depth + 1, maxDepth, ignore);
+            }
+            for (int i = 0; i < files.Length; i++)
+            {
+                string name = Path.GetFileName(files[i]);
+                bool last = (i == files.Length - 1);
+                sb.AppendLine(prefix + (last ? "└─ " : "├─ ") + name);
+            }
+        }
+
+        public static string GenerateDirectoryTree(string root, int maxDepth)
+        {
+            if (string.IsNullOrEmpty(root) || !Directory.Exists(root)) return "";
+            HashSet<string> ignore = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string n in new string[] { ".git", ".svn", "node_modules", ".venv", "venv", "bin", "obj", "dist", "build", ".idea", ".vscode", "__pycache__" })
+                ignore.Add(n);
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(Path.GetFileName(root.TrimEnd('\\', '/')) + "/");
+            AppendTree(sb, root, "", 1, Math.Max(1, Math.Min(8, maxDepth)), ignore);
+            return sb.ToString();
+        }
+
+        public static string CleanErrorText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            string result = Regex.Replace(text, "\x1B\\[[0-9;]*m", "");
+            result = Regex.Replace(result, "(?im)^\\s*(?:at\\s+)?(?:\\d{4}-\\d{2}-\\d{2}[ T])?\\d{2}:\\d{2}:\\d{2}(?:[.,]\\d+)?\\s*", "");
+            result = Regex.Replace(result, "(?im)^\\s*at\\s+[A-Za-z]:\\\\[^\\r\\n]{60,}$", "");
+            result = Regex.Replace(result, "(?im)^.*(node_modules|site-packages|__pycache__)[^\\r\\n]{60,}$", "");
+            result = Regex.Replace(result, "(?m)^\\s*$", "");
+            List<string> lines = new List<string>();
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string line in result.Split('\n'))
+            {
+                string t = line.TrimEnd();
+                if (t.Length == 0 || seen.Contains(t)) continue;
+                seen.Add(t);
+                lines.Add(t);
+                if (lines.Count >= 120) break;
+            }
+            return string.Join("\r\n", lines.ToArray());
+        }
+
         public static int MigrateCodexCaches(string targetRoot, List<string> log)
         {
             if (string.IsNullOrEmpty(targetRoot)) return 0;
