@@ -18,12 +18,12 @@ namespace CodexNetFix
 
     public static class AppVersion
     {
-        public const string Num = "1.1.200";
-        public const string Current = "v1.1.200";
-        public const string Last = "v1.1.175";
+        public const string Num = "1.1.225";
+        public const string Current = "v1.1.225";
+        public const string Last = "v1.1.200";
         public const string Older = "v26.9.26.285bate";
         public const string Legacy = "v26.9.26.001bate";
-        public const string Previous = "v1.1.175";
+        public const string Previous = "v1.1.200";
 
         // 作者有话说（显示在更新日志页顶部）
         public static string AuthorNote()
@@ -36,6 +36,11 @@ namespace CodexNetFix
         public static string[] CurrentChanges()
         {
             return new string[] {
+                "新增高级省 Token 工具弹窗",
+                "新增环境变量冲突检查、Git 状态摘要和上下文 Token 估算",
+                "新增错误搜索建议、缓存占用扫描和配置快照 Diff",
+                "所有高级工具均为本地运行，不自动改写配置",
+                "版本更新为 v1.1.225",
                 "新增项目目录树生成器，忽略大目录并自动复制到剪贴板",
                 "新增剪贴板报错精简器，去掉时间戳、颜色码、重复行和长路径",
                 "新增生成文件与安全缓存存储目录选择",
@@ -55,9 +60,15 @@ namespace CodexNetFix
         public static List<VersionLog> All()
         {
             List<VersionLog> list = new List<VersionLog>();
-            string[] vers = new string[] { "v1.1.200", "v1.1.175", "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
+            string[] vers = new string[] { "v1.1.225", "v1.1.200", "v1.1.175", "v1.1.150", "v1.1.125", "v1.1.100", "v1.0.350", "v1.0.325", "v1.0.300", "v1.0.275", "v1.0.250", "v1.0.225", "v1.0.200", "v1.0.125", "v1.0.100", "v26.9.27.100bate", "v26.9.26.300bate", "v26.9.26.285bate", "v26.9.26.280bate", "v26.9.26.200bate", "v26.9.26.050bate", "v26.9.26.010bate", "v26.9.26.001bate" };
             string[][] items = new string[][] {
 
+                new string[] {
+                    "新增高级省 Token 工具弹窗",
+                    "加入环境冲突检查、Git 摘要、上下文估算、搜索建议、缓存扫描和快照 Diff",
+                    "全部本地运行，不自动改写配置",
+                    "版本更新为 v1.1.225"
+                },
                 new string[] {
                     "新增项目目录树生成器，忽略大目录并自动复制",
                     "新增剪贴板报错精简器",

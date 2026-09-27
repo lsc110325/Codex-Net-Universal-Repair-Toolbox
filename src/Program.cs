@@ -43,7 +43,7 @@ namespace CodexNetFix
         RoundPanel cardSideStatus;
         Panel topBar, sidebar, contentHost, bodyPanel, bottomBar;
         RoundButton btnLaunchProxy, btnAllInOne, btnSpeed, btnPack, btnSnap, btnRestore, btnPortQ, btnTimeQ;
-        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor, btnToggleTokenChart, btnProjectTree, btnErrorCleaner;
+        RoundButton btnDebugKey, btnPonytail, btnTokenGuide, btnTokenSpeed, btnTokenMonitor, btnToggleTokenChart, btnProjectTree, btnErrorCleaner, btnAdvancedTools;
         SwitchBox swTokenWarn;
         Label lblTokenToday, lblTokenWeek, lblTokenLimit, lblTokenWarnStatus;
         TokenStatsChart tokenChart;
@@ -792,10 +792,11 @@ namespace CodexNetFix
             btnDebugKey = MkAction("输入调试码", 278, 112, 240, delegate { DoDebugKey(); });
             btnProjectTree = MkAction("生成项目目录树", 538, 112, 234, delegate { DoProjectTree(); });
             btnErrorCleaner = MkAction("精简剪贴板报错", 18, 170, 240, delegate { DoCleanClipboardError(); });
+            btnAdvancedTools = MkAction("高级省 Token 工具...", 278, 170, 240, delegate { DoAdvancedTokenTools(); });
             Label tip = MkLabel("Token 统计来自本机 Codex sessions 日志，按会话最后写入日期估算。", 8.5f, FontStyle.Regular, 18, 216, "hint");
             cardTools.Controls.Add(btnPonytail); cardTools.Controls.Add(btnTokenGuide); cardTools.Controls.Add(btnTokenSpeed);
             cardTools.Controls.Add(btnTokenMonitor); cardTools.Controls.Add(btnDebugKey); cardTools.Controls.Add(btnProjectTree);
-            cardTools.Controls.Add(btnErrorCleaner); cardTools.Controls.Add(tip);
+            cardTools.Controls.Add(btnErrorCleaner); cardTools.Controls.Add(btnAdvancedTools); cardTools.Controls.Add(tip);
 
             pageToken.Controls.Add(cardChart); pageToken.Controls.Add(cardWarn); pageToken.Controls.Add(cardTools);
             lblTokenToday.Text = "打开 Token 优化分区后开始统计";
@@ -1358,6 +1359,12 @@ namespace CodexNetFix
             {
                 SetStatus("报错精简失败: " + ex.Message, pal.Fail);
             }
+        }
+
+        void DoAdvancedTokenTools()
+        {
+            using (AdvancedTokenToolsDialog dlg = new AdvancedTokenToolsDialog(pal))
+                dlg.ShowDialog(this);
         }
 
         void CopyTokenGuide()
@@ -2531,6 +2538,112 @@ namespace CodexNetFix
                     g.FillEllipse(head, 23, 12, 26, 26);
             }
             return b;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+        void AttachDrag(Control c)
+        {
+            c.MouseDown += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Left) return;
+                try { ReleaseCapture(); SendMessage(Handle, 0xA1, 0x2, 0); } catch { }
+            };
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Draw.Smooth(e.Graphics);
+            using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width - 1, Height - 1), 16))
+            using (Pen p = new Pen(Color.FromArgb(40, 0, 0, 0)))
+                e.Graphics.DrawPath(p, gp);
+        }
+    }
+
+    public class AdvancedTokenToolsDialog : Form
+    {
+        Palette pal;
+        TextBox output;
+        public AdvancedTokenToolsDialog(Palette theme)
+        {
+            pal = theme;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterParent;
+            ClientSize = new Size(720, 480);
+            Text = "高级省 Token 工具";
+            BackColor = pal.ContentBg;
+            Font = Draw.Ui(9.5f, FontStyle.Regular);
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+            Panel head = new Panel();
+            head.Left = 0; head.Top = 0; head.Width = ClientSize.Width; head.Height = 50; head.BackColor = pal.Accent;
+            Label title = new Label();
+            title.Text = "高级省 Token 工具"; title.Font = Draw.Ui(12f, FontStyle.Bold);
+            title.ForeColor = Color.White; title.BackColor = Color.Transparent; title.AutoSize = true; title.Left = 20; title.Top = 14;
+            RoundButton close = new RoundButton();
+            close.Text = "×"; close.Primary = true; close.Theme = pal; close.TextOverride = Color.White;
+            close.Left = ClientSize.Width - 48; close.Top = 10; close.Width = 34; close.Height = 30;
+            close.Click += delegate { Close(); };
+            head.Controls.Add(title); head.Controls.Add(close);
+            AttachDrag(head); AttachDrag(title); Controls.Add(head);
+
+            string[] labels = new string[] { "环境冲突检查", "Git 状态摘要", "上下文 Token 估算", "搜索建议", "缓存占用扫描", "配置快照 Diff" };
+            EventHandler[] actions = new EventHandler[] {
+                delegate { Run(delegate { return Core.EnvironmentReport(); }); },
+                delegate { Run(delegate { return GitSummary(); }); },
+                delegate { Run(delegate { return Core.EstimateContext(Clipboard.GetText()); }); },
+                delegate { Run(delegate { return Core.SearchSuggestions(Clipboard.GetText()); }); },
+                delegate { Run(delegate { return Core.CacheUsageReport(); }); },
+                delegate { Run(delegate { return SnapshotDiff(); }); }
+            };
+            for (int i = 0; i < labels.Length; i++)
+            {
+                RoundButton b = new RoundButton();
+                b.Text = labels[i]; b.Theme = pal; b.Left = 18; b.Top = 66 + i * 56; b.Width = 150; b.Height = 38;
+                b.Click += actions[i];
+                Controls.Add(b);
+            }
+            output = new TextBox();
+            output.Multiline = true; output.ReadOnly = true; output.ScrollBars = ScrollBars.Both;
+            output.BorderStyle = BorderStyle.None; output.Font = new Font("Consolas", 9f);
+            output.Left = 188; output.Top = 66; output.Width = 514; output.Height = 380;
+            output.BackColor = pal.Card; output.ForeColor = pal.Text;
+            Controls.Add(output);
+            Shown += delegate { using (System.Drawing.Drawing2D.GraphicsPath gp = Draw.Rounded(new Rectangle(0, 0, Width, Height), 16)) Region = new Region(gp); };
+        }
+
+        void Run(Func<string> action)
+        {
+            try
+            {
+                Cursor previous = Cursor;
+                Cursor = Cursors.WaitCursor;
+                output.Text = action();
+                Cursor = previous;
+            }
+            catch (Exception ex) { Cursor = Cursors.Default; output.Text = "执行失败：" + ex.Message; }
+        }
+
+        string GitSummary()
+        {
+            FolderBrowserDialog f = new FolderBrowserDialog();
+            f.Description = "选择 Git 项目目录";
+            if (f.ShowDialog(this) != DialogResult.OK) return output.Text;
+            return Core.GitSummary(f.SelectedPath);
+        }
+
+        string SnapshotDiff()
+        {
+            List<string> snaps = Core.ListSnapshots();
+            if (snaps.Count == 0) return "还没有配置快照。请先在“更多工具”里创建快照。";
+            OpenFileDialog f = new OpenFileDialog();
+            f.InitialDirectory = Core.SnapshotsDir();
+            f.Filter = "配置快照|snapshot-*.zip";
+            f.FileName = Path.GetFileName(snaps[0]);
+            if (f.ShowDialog(this) != DialogResult.OK) return output.Text;
+            return Core.CompareSnapshot(f.FileName);
         }
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]

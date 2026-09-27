@@ -1010,6 +1010,182 @@ namespace CodexNetFix
             return root;
         }
 
+        public static string EnvironmentReport()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("环境隔离检查");
+            sb.AppendLine();
+            string[] names = new string[] { "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy" };
+            foreach (string name in names)
+            {
+                string v = Environment.GetEnvironmentVariable(name);
+                if (!string.IsNullOrEmpty(v)) sb.AppendLine(name + " = " + v);
+            }
+            sb.AppendLine();
+            try
+            {
+                using (RegistryKey k = Registry.CurrentUser.OpenSubKey("Environment"))
+                {
+                    if (k != null)
+                    {
+                        sb.AppendLine("用户级环境变量：");
+                        foreach (string name in names)
+                        {
+                            object v = k.GetValue(name);
+                            if (v != null) sb.AppendLine("  " + name + " = " + v);
+                        }
+                    }
+                }
+            }
+            catch { }
+            string[] codexVars = new string[] { "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY" };
+            sb.AppendLine();
+            sb.AppendLine("Codex 配置中的代理解析：");
+            try
+            {
+                string cfg = Path.Combine(CodexHome(), "config.toml");
+                string env = Path.Combine(CodexHome(), ".env");
+                string text = (File.Exists(cfg) ? File.ReadAllText(cfg) : "") + "\n" + (File.Exists(env) ? File.ReadAllText(env) : "");
+                foreach (string name in codexVars)
+                {
+                    Match m = Regex.Match(text, "(?im)^\\s*" + name + "\\s*=\\s*\"?([^\"\\r\\n]+)");
+                    if (m.Success) sb.AppendLine("  " + name + " = " + m.Groups[1].Value.Trim());
+                }
+            }
+            catch { }
+            sb.AppendLine();
+            sb.AppendLine("提示：如果进程变量、用户变量和 Codex 配置里的端口不一致，优先保留 Codex 的 [shell_environment_policy.set]。");
+            return sb.ToString();
+        }
+
+        public static string GitSummary(string root)
+        {
+            if (string.IsNullOrEmpty(root) || !Directory.Exists(root)) return "目录不存在。";
+            string branch = RunProcess("git.exe", "-C \"" + root + "\" rev-parse --abbrev-ref HEAD", 8000);
+            string status = RunProcess("git.exe", "-C \"" + root + "\" status --short", 8000);
+            string diff = RunProcess("git.exe", "-C \"" + root + "\" diff --stat", 8000);
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Git 摘要");
+            sb.AppendLine("分支：" + branch.Trim());
+            sb.AppendLine();
+            sb.AppendLine("状态：");
+            sb.AppendLine(string.IsNullOrEmpty(status.Trim()) ? "(干净)" : status.Trim());
+            sb.AppendLine();
+            sb.AppendLine("改动统计：");
+            sb.AppendLine(string.IsNullOrEmpty(diff.Trim()) ? "(无未提交改动)" : diff.Trim());
+            return sb.ToString();
+        }
+
+        public static string EstimateContext(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "剪贴板为空。";
+            int chars = text.Length;
+            int lines = text.Split('\n').Length;
+            long approx = (long)Math.Ceiling(chars / 3.5);
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("上下文估算（本地近似值）");
+            sb.AppendLine("字符数：" + chars.ToString("N0"));
+            sb.AppendLine("行数：" + lines.ToString("N0"));
+            sb.AppendLine("约 Token：" + approx.ToString("N0"));
+            sb.AppendLine();
+            sb.AppendLine(approx > 50000 ? "建议：不要整段粘贴，先生成目录树或只提供相关文件。" :
+                approx > 12000 ? "建议：先裁剪日志或只保留报错堆栈。" : "体量较小，可以直接粘贴。");
+            return sb.ToString();
+        }
+
+        public static string SearchSuggestions(string text)
+        {
+            string q = (text ?? "").Trim();
+            if (q.Length > 180) q = q.Substring(0, 180);
+            q = Regex.Replace(q, "\\s+", " ");
+            string qq = Uri.EscapeDataString(q);
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("本地搜索建议");
+            sb.AppendLine();
+            sb.AppendLine("GitHub: https://github.com/search?q=" + qq);
+            sb.AppendLine("Stack Overflow: https://stackoverflow.com/search?q=" + qq);
+            sb.AppendLine();
+            sb.AppendLine("先把上面的搜索结果交给 Codex，再要求它只阅读相关文件。");
+            return sb.ToString();
+        }
+
+        public static string CacheUsageReport()
+        {
+            string[] paths = new string[] {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "codex-runtimes"),
+                Path.Combine(CodexHome(), ".tmp"),
+                Path.Combine(CodexHome(), "tmp"),
+                Path.Combine(CodexHome(), "node_repl"),
+                Path.Combine(CodexHome(), "visualizations"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp")
+            };
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("缓存占用扫描");
+            foreach (string p in paths)
+            {
+                try
+                {
+                    if (!Directory.Exists(p)) continue;
+                    long size = 0;
+                    foreach (string f in Directory.GetFiles(p, "*", SearchOption.AllDirectories))
+                        try { size += new FileInfo(f).Length; } catch { }
+                    sb.AppendLine(Path.GetFileName(p) + "：" + Math.Round(size / 1048576.0, 1) + " MB");
+                }
+                catch { }
+            }
+            return sb.ToString();
+        }
+
+        public static string CompareSnapshot(string zip)
+        {
+            if (string.IsNullOrEmpty(zip) || !File.Exists(zip)) return "快照不存在。";
+            try
+            {
+                string currentCfg = File.Exists(Path.Combine(CodexHome(), "config.toml")) ? File.ReadAllText(Path.Combine(CodexHome(), "config.toml")) : "";
+                string currentEnv = File.Exists(Path.Combine(CodexHome(), ".env")) ? File.ReadAllText(Path.Combine(CodexHome(), ".env")) : "";
+                string oldCfg = ReadZipText(zip, "config.toml");
+                string oldEnv = ReadZipText(zip, ".env");
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("配置快照 Diff");
+                sb.AppendLine();
+                sb.AppendLine("config.toml：");
+                sb.AppendLine(SimpleDiff(oldCfg, currentCfg));
+                sb.AppendLine(".env：");
+                sb.AppendLine(SimpleDiff(oldEnv, currentEnv));
+                return sb.ToString();
+            }
+            catch (Exception ex) { return "读取快照失败：" + ex.Message; }
+        }
+
+        static string ReadZipText(string zip, string entryName)
+        {
+            using (System.IO.Compression.ZipArchive za = System.IO.Compression.ZipFile.OpenRead(zip))
+            {
+                foreach (System.IO.Compression.ZipArchiveEntry e in za.Entries)
+                    if (string.Equals(e.FullName, entryName, StringComparison.OrdinalIgnoreCase))
+                        using (StreamReader r = new StreamReader(e.Open())) return r.ReadToEnd();
+            }
+            return "";
+        }
+
+        static string SimpleDiff(string oldText, string newText)
+        {
+            string[] oldLines = (oldText ?? "").Split('\n');
+            string[] newLines = (newText ?? "").Split('\n');
+            Dictionary<string, int> left = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string line in oldLines) { string t = line.Trim(); left[t] = left.ContainsKey(t) ? left[t] + 1 : 1; }
+            StringBuilder sb = new StringBuilder();
+            foreach (string line in newLines)
+            {
+                string t = line.Trim();
+                if (left.ContainsKey(t) && left[t] > 0) left[t]--;
+                else if (t.Length > 0) sb.AppendLine("+ " + t);
+            }
+            foreach (KeyValuePair<string, int> kv in left)
+                for (int i = 0; i < kv.Value; i++) if (kv.Key.Length > 0) sb.AppendLine("- " + kv.Key);
+            return sb.Length == 0 ? "(无差异)" : sb.ToString().Trim();
+        }
+
         public static string CleanCodexCaches(List<string> log)
         {
             string[] names = new string[] { ".tmp", "tmp", "node_repl", "visualizations" };
