@@ -14,6 +14,7 @@
 
 - [为什么需要它](#为什么需要它)
 - [功能特性](#功能特性)
+- [界面预览](#界面预览)
 - [快速开始](#快速开始)
 - [命令行用法](#命令行用法)
 - [工作原理](#工作原理)
@@ -56,6 +57,24 @@
 - **零依赖**：单文件 EXE，使用系统自带 .NET Framework 4.8 编译与运行，无需安装、无需管理员权限
 
 ---
+
+## 界面预览
+
+| 修复 | 自检 |
+|---|---|
+| ![修复](assets/screenshots/ui-repair.png) | ![自检](assets/screenshots/ui-check.png) |
+
+| Token 优化 | 更多工具 |
+|---|---|
+| ![Token 优化](assets/screenshots/ui-token.png) | ![更多工具](assets/screenshots/ui-more.png) |
+
+| 更新日志 | 快捷键 |
+|---|---|
+| ![更新日志](assets/screenshots/ui-about.png) | ![快捷键](assets/screenshots/ui-hotkeys.png) |
+
+| 关于与鸣谢 |
+|---|
+| ![关于与鸣谢](assets/screenshots/ui-thanks.png) |
 
 ---
 
