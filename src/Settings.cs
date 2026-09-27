@@ -293,6 +293,7 @@ namespace CodexNetFix
         public int RepairCount = 0;
         public bool TokenWarnEnabled = true;
         public int TokenWarnMillions = 100;
+        public string StorageRoot = @"E:\WUHANTIANHE\CodexData\Generated";
 
         public static string Dir()
         {
@@ -334,6 +335,7 @@ namespace CodexNetFix
                 s.RepairCount = GetInt(t, "repairCount", s.RepairCount);
                 s.TokenWarnEnabled = GetBool(t, "tokenWarnEnabled", s.TokenWarnEnabled);
                 s.TokenWarnMillions = GetInt(t, "tokenWarnMillions", s.TokenWarnMillions);
+                s.StorageRoot = GetStr(t, "storageRoot", s.StorageRoot);
                 s.HotkeysEnabled = GetBool(t, "hotkeysEnabled", s.HotkeysEnabled);
                 s.HotkeyRepair = GetStr(t, "hotkeyRepair", s.HotkeyRepair);
                 s.HotkeyCheck = GetStr(t, "hotkeyCheck", s.HotkeyCheck);
@@ -384,6 +386,7 @@ namespace CodexNetFix
                 sb.AppendLine("  \"repairCount\": " + RepairCount + ",");
                 sb.AppendLine("  \"tokenWarnEnabled\": " + (TokenWarnEnabled ? "true" : "false") + ",");
                 sb.AppendLine("  \"tokenWarnMillions\": " + TokenWarnMillions + ",");
+                sb.AppendLine("  \"storageRoot\": \"" + StorageRoot.Replace("\\", "\\\\") + "\",");
                 sb.AppendLine("  \"hotkeysEnabled\": " + (HotkeysEnabled ? "true" : "false") + ",");
                 sb.AppendLine("  \"hotkeyRepair\": \"" + HotkeyRepair + "\",");
                 sb.AppendLine("  \"hotkeyCheck\": \"" + HotkeyCheck + "\",");

@@ -979,7 +979,8 @@ namespace CodexNetFix
         {
             try
             {
-                string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                string desktop = OutputRoot();
+                Directory.CreateDirectory(desktop);
                 string zip = Path.Combine(desktop, "Codex反馈包-" + Timestamp() + ".zip");
                 List<CheckItem> items = SelfCheck(port, true, null);
                 string report = ReportText(port, items, log);
@@ -1001,6 +1002,75 @@ namespace CodexNetFix
             catch (Exception ex) { if (log != null) log.Add("  ✗ 生成反馈包失败: " + ex.Message); return ""; }
         }
         // 运行环境探针：检测是否在受限沙箱内运行（沙箱会隔离 CODEX_HOME 写权限与用户环境变量注册表）
+        public static string OutputRoot()
+        {
+            string root = AppSettings.Load().StorageRoot;
+            if (string.IsNullOrEmpty(root)) root = @"E:\WUHANTIANHE\CodexData\Generated";
+            try { Directory.CreateDirectory(root); } catch { }
+            return root;
+        }
+
+        public static string CleanCodexCaches(List<string> log)
+        {
+            string[] names = new string[] { ".tmp", "tmp", "node_repl", "visualizations" };
+            long total = 0;
+            int cleaned = 0;
+            foreach (string name in names)
+            {
+                string path = Path.Combine(CodexHome(), name);
+                try
+                {
+                    if (!Directory.Exists(path)) continue;
+                    if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                    {
+                        if (log != null) log.Add("  - skip migrated cache: " + path);
+                        continue;
+                    }
+                    long size = 0;
+                    foreach (string f in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+                        try { size += new FileInfo(f).Length; } catch { }
+                    Directory.Delete(path, true);
+                    Directory.CreateDirectory(path);
+                    total += size;
+                    cleaned++;
+                    if (log != null) log.Add("  - cleaned: " + path + " (" + Math.Round(size / 1048576.0, 1) + " MB)");
+                }
+                catch (Exception ex) { if (log != null) log.Add("  - clean failed: " + path + " : " + ex.Message); }
+            }
+            return "已清理 " + cleaned + " 个缓存目录，释放约 " + Math.Round(total / 1048576.0, 1) + " MB";
+        }
+
+        public static int MigrateCodexCaches(string targetRoot, List<string> log)
+        {
+            if (string.IsNullOrEmpty(targetRoot)) return 0;
+            string baseDir = Path.Combine(targetRoot, ".codex");
+            Directory.CreateDirectory(baseDir);
+            string[] names = new string[] { ".tmp", "tmp", "node_repl", "visualizations" };
+            int moved = 0;
+            foreach (string name in names)
+            {
+                string src = Path.Combine(CodexHome(), name);
+                string dst = Path.Combine(baseDir, name);
+                try
+                {
+                    if (!Directory.Exists(src)) continue;
+                    if ((File.GetAttributes(src) & FileAttributes.ReparsePoint) != 0)
+                    {
+                        if (log != null) log.Add("  - already migrated: " + src);
+                        continue;
+                    }
+                    if (Directory.Exists(dst)) { if (log != null) log.Add("  - target exists: " + dst); continue; }
+                    Directory.Move(src, dst);
+                    RunProcess("cmd.exe", "/c mklink /J \"" + src + "\" \"" + dst + "\"", 30000);
+                    if (!Directory.Exists(src)) Directory.CreateDirectory(src);
+                    moved++;
+                    if (log != null) log.Add("  - migrated: " + name + " -> " + dst);
+                }
+                catch (Exception ex) { if (log != null) log.Add("  - migrate failed: " + src + " : " + ex.Message); }
+            }
+            return moved;
+        }
+
         public static string ProbeEnvironment()
         {
             string home = CodexHome();

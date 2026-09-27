@@ -30,8 +30,9 @@ namespace CodexNetFix
         Panel pageRepair, pageCheck, pageToken, pageMore, pageAbout, pageSettings;
         RoundPanel cardPort, cardOptions, cardActions, cardLog, cardCheckList, cardLook, cardBehave, cardStore, cardLogNow, cardLogPrev, cardHistory;
         TextBox txtPort, logBox;
-        Label lblPortHint, lblCheckSum, lblStorePath, lblVersion, lblIntervalValue, lblAccentName;
+        Label lblPortHint, lblCheckSum, lblStorePath, lblStoragePath, lblVersion, lblIntervalValue, lblAccentName;
         RoundButton btnDetect, btnFix, btnRestart, btnRollback, btnClearEnv, btnCheck, btnExport, btnCopy, btnDoc, btnSave, btnOpenDir, btnIntervalMinus, btnIntervalPlus, btnCleanup, btnOpenCodex;
+        RoundButton btnChooseStorage, btnCleanCache, btnMigrateCache;
         RoundButton[] swatches;
         SwitchBox swStartCheck, swMonitor, swTray, swDeep, swCodex, swUserEnv, swGit, swGitExec, swAnim, swDomestic, swDark, swHotkeys;
         RoundButton btnEditHotkeys;
@@ -953,8 +954,31 @@ namespace CodexNetFix
             btnCleanup = new RoundButton();
             btnCleanup.Text = "清理旧版本"; btnCleanup.Left = 18; btnCleanup.Top = 142; btnCleanup.Width = 122; btnCleanup.Height = 34;
             btnCleanup.Click += delegate { DoCleanupOld(); };
+            lblStoragePath = MkLabel("生成文件目录：" + cfg.StorageRoot, 8.5f, FontStyle.Regular, 18, 184, "hint");
+            lblStoragePath.AutoSize = false; lblStoragePath.Width = 350; lblStoragePath.Height = 34;
+            btnChooseStorage = new RoundButton();
+            btnChooseStorage.Text = "选择存储目录"; btnChooseStorage.Left = 18; btnChooseStorage.Top = 222; btnChooseStorage.Width = 170; btnChooseStorage.Height = 32;
+            btnChooseStorage.Click += delegate
+            {
+                FolderBrowserDialog f = new FolderBrowserDialog();
+                f.Description = "选择生成文件和缓存的存储目录";
+                if (f.ShowDialog(this) == DialogResult.OK)
+                {
+                    cfg.StorageRoot = f.SelectedPath; cfg.Save();
+                    lblStoragePath.Text = "生成文件目录：" + cfg.StorageRoot;
+                    SetStatus("存储目录已更新", pal.Ok);
+                }
+            };
+            btnCleanCache = new RoundButton();
+            btnCleanCache.Text = "清理 Codex 缓存"; btnCleanCache.Left = 200; btnCleanCache.Top = 222; btnCleanCache.Width = 170; btnCleanCache.Height = 32;
+            btnCleanCache.Click += delegate { DoCleanCaches(); };
+            btnMigrateCache = new RoundButton();
+            btnMigrateCache.Text = "迁移安全缓存到目标目录"; btnMigrateCache.Left = 18; btnMigrateCache.Top = 264; btnMigrateCache.Width = 352; btnMigrateCache.Height = 32;
+            btnMigrateCache.Click += delegate { DoMigrateCaches(); };
             cardStore.Controls.Add(lblStorePath); cardStore.Controls.Add(btnOpenDir);
             cardStore.Controls.Add(btnSave); cardStore.Controls.Add(btnCleanup);
+            cardStore.Controls.Add(lblStoragePath); cardStore.Controls.Add(btnChooseStorage);
+            cardStore.Controls.Add(btnCleanCache); cardStore.Controls.Add(btnMigrateCache);
 
             RoundPanel cardUpgrade = MkCard("如何升级到新版本", 402, 336, 388, 262);
             string[] ups = new string[] {
@@ -1804,6 +1828,34 @@ namespace CodexNetFix
             foreach (string l in lg) AppendLog(l);
             SetStatus("已清理 " + n + " 项旧版本", pal.Ok);
             History.Add("清理旧版本", n > 0 ? "成功" : "未删除", n + " 项");
+        }
+
+        void DoCleanCaches()
+        {
+            if (MessageBox.Show("只会清理 Codex 的临时缓存，不会删除配置、账号、会话数据库和插件。\r\n\r\n确定继续吗？",
+                "清理 Codex 缓存", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
+            List<string> lg = new List<string>();
+            string result = Core.CleanCodexCaches(lg);
+            foreach (string l in lg) AppendLog(l);
+            SetStatus(result, pal.Ok);
+            History.Add("清理 Codex 缓存", "完成", result);
+            MessageBox.Show(result + "\r\n\r\n已迁移为 junction 的缓存会自动跳过，避免误删 E 盘数据。",
+                "清理完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        void DoMigrateCaches()
+        {
+            if (string.IsNullOrEmpty(cfg.StorageRoot)) return;
+            if (MessageBox.Show("将把 .tmp、tmp、node_repl、visualizations 等安全缓存迁移到：\r\n" + cfg.StorageRoot
+                + "\r\n\r\n活动运行时、会话数据库、配置和插件不会移动。确定继续吗？",
+                "迁移安全缓存", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+            List<string> lg = new List<string>();
+            int n = Core.MigrateCodexCaches(cfg.StorageRoot, lg);
+            foreach (string l in lg) AppendLog(l);
+            SetStatus("安全缓存迁移完成，移动 " + n + " 项", pal.Ok);
+            History.Add("迁移安全缓存", n > 0 ? "成功" : "跳过", n + " 项");
+            MessageBox.Show("迁移完成，移动 " + n + " 项。\r\n\r\n已迁移目录会保留 junction，Codex 仍按原路径访问。",
+                "迁移完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         void DoLaunchProxy()
